@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>融合指挥栏设计方案</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f4f5fb;
+            color: #1d1d1f;
+        }
+
+        body {
+            margin: 0;
+            padding: 48px 24px 96px;
+            display: flex;
+            justify-content: center;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .page {
+            width: min(1080px, 100%);
+            display: grid;
+            gap: 36px;
+        }
+
+        .intro {
+            display: grid;
+            gap: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.4rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .notes {
+            max-width: 780px;
+            font-size: 0.96rem;
+            line-height: 1.6;
+            color: #6e6e73;
+        }
+
+        .demo-grid {
+            display: grid;
+            gap: 32px;
+        }
+
+        .demo-card {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 28px 30px;
+            box-shadow: 0 20px 46px rgba(15, 23, 42, 0.1);
+            display: grid;
+            gap: 20px;
+        }
+
+        .demo-card h2 {
+            margin: 0;
+            font-size: 1.45rem;
+            letter-spacing: -0.01em;
+        }
+
+        .demo-card p {
+            margin: 0;
+            font-size: 0.96rem;
+            line-height: 1.6;
+            color: #6e6e73;
+        }
+
+        .hub-stage {
+            background: linear-gradient(180deg, rgba(233, 237, 251, 0.9), rgba(217, 225, 244, 0.32));
+            border-radius: 34px;
+            padding: 42px 28px 48px;
+            display: grid;
+            justify-items: center;
+        }
+
+        .hub-shell {
+            width: min(820px, 100%);
+            border-radius: 36px;
+            padding: 46px 36px 56px;
+            background: rgba(255, 255, 255, 0.88);
+            position: relative;
+            box-shadow: 0 28px 64px rgba(15, 23, 42, 0.16);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .hub-shell::after {
+            content: "";
+            position: absolute;
+            inset: 24px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+        }
+
+        .hub-content {
+            height: 320px;
+            margin-top: 120px;
+            border-radius: 26px;
+            background: rgba(15, 23, 42, 0.04);
+        }
+
+        .command-hub {
+            position: sticky;
+            top: 24px;
+            z-index: 2;
+            display: grid;
+            gap: 20px;
+            padding: 24px 28px;
+            border-radius: 30px;
+            border: 1px solid rgba(210, 220, 255, 0.45);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 26px 60px rgba(15, 23, 42, 0.16);
+            backdrop-filter: blur(28px) saturate(160%);
+            -webkit-backdrop-filter: blur(28px) saturate(160%);
+        }
+
+        .command-toolbar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .command-title {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 260px;
+        }
+
+        .command-title h3 {
+            margin: 0;
+            font-size: 1.48rem;
+            letter-spacing: -0.02em;
+        }
+
+        .command-meta {
+            font-size: 0.92rem;
+            color: rgba(28, 28, 30, 0.6);
+        }
+
+        .command-actions {
+            display: flex;
+            align-items: stretch;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .filter-control {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            border: 1px solid rgba(60, 60, 67, 0.1);
+            background: rgba(255, 255, 255, 0.8);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .filter-toggle svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.6px;
+        }
+
+        .filter-summary {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #6e6e73;
+            letter-spacing: -0.01em;
+        }
+
+        .command-utility {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.78);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        }
+
+        .toolbar .divider {
+            width: 1px;
+            height: 24px;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.18), transparent);
+            margin: 0 2px;
+        }
+
+        .toolbar-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .toolbar-btn.outline {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.7);
+            color: #0f62fe;
+        }
+
+        .toolbar-btn.primary {
+            background: #007aff;
+            color: #ffffff;
+        }
+
+        .progress-section {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 22px;
+            border: 1px solid rgba(210, 220, 255, 0.5);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+            display: grid;
+            gap: 16px;
+            padding: 16px 18px 20px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .progress-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.02rem;
+            font-weight: 600;
+        }
+
+        .progress-pill {
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.14);
+            color: #1d4ed8;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .toggle-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 12px;
+            background: rgba(37, 99, 235, 0.12);
+            color: #1d4ed8;
+            display: grid;
+            place-items: center;
+            font-size: 1.1rem;
+        }
+
+        .progress-meter {
+            display: grid;
+            gap: 8px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.18);
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 72%;
+            border-radius: inherit;
+            background: linear-gradient(118deg, #2563eb, #38bdf8);
+        }
+
+        .progress-summary {
+            font-size: 0.9rem;
+            color: #6e6e73;
+            letter-spacing: -0.01em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .stat-item {
+            background: rgba(37, 99, 235, 0.08);
+            border-radius: 16px;
+            padding: 12px 14px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .stat-number {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .stat-label {
+            font-size: 0.82rem;
+            color: rgba(28, 28, 30, 0.6);
+            letter-spacing: 0.01em;
+        }
+
+        .command-hub[class*="variant"] .toolbar,
+        .command-hub[class*="variant"] .stat-item,
+        .command-hub[class*="variant"] .progress-section {
+            transition: all 0.25s ease;
+        }
+
+        .command-hub.variant-aurora {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(219, 232, 255, 0.8));
+            border-color: rgba(170, 197, 255, 0.5);
+            box-shadow: 0 34px 80px rgba(45, 105, 255, 0.22);
+        }
+
+        .command-hub.variant-aurora .progress-pill {
+            background: rgba(96, 165, 250, 0.2);
+            color: #2563eb;
+        }
+
+        .command-hub.variant-aurora .stat-item {
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .command-hub.variant-horizon {
+            background: linear-gradient(140deg, rgba(255, 247, 230, 0.96), rgba(255, 226, 230, 0.82));
+            border-color: rgba(255, 186, 148, 0.4);
+            box-shadow: 0 32px 76px rgba(255, 149, 0, 0.2);
+        }
+
+        .command-hub.variant-horizon .toolbar {
+            background: rgba(255, 255, 255, 0.82);
+            border-color: rgba(255, 149, 0, 0.28);
+        }
+
+        .command-hub.variant-horizon .progress-pill {
+            background: rgba(255, 149, 0, 0.2);
+            color: #c2410c;
+        }
+
+        .command-hub.variant-horizon .progress-bar {
+            background: linear-gradient(118deg, #f97316, #ec4899);
+        }
+
+        .command-hub.variant-horizon .stat-item {
+            background: rgba(255, 149, 0, 0.16);
+        }
+
+        .command-hub.variant-midnight {
+            background: linear-gradient(140deg, rgba(20, 24, 35, 0.9), rgba(31, 41, 55, 0.82));
+            border-color: rgba(107, 114, 128, 0.4);
+            box-shadow: 0 34px 80px rgba(15, 23, 42, 0.6);
+            color: #edf2ff;
+        }
+
+        .command-hub.variant-midnight .command-meta,
+        .command-hub.variant-midnight .progress-summary,
+        .command-hub.variant-midnight .stat-label {
+            color: rgba(226, 232, 240, 0.72);
+        }
+
+        .command-hub.variant-midnight .toolbar {
+            background: rgba(31, 41, 55, 0.82);
+            border-color: rgba(148, 163, 184, 0.32);
+        }
+
+        .command-hub.variant-midnight .toolbar-btn {
+            color: #e2e8f0;
+        }
+
+        .command-hub.variant-midnight .toolbar-btn.outline {
+            border-color: rgba(148, 163, 184, 0.4);
+            color: #93c5fd;
+        }
+
+        .command-hub.variant-midnight .progress-section {
+            background: rgba(15, 23, 42, 0.78);
+            border-color: rgba(148, 163, 184, 0.32);
+        }
+
+        .command-hub.variant-midnight .progress-pill {
+            background: rgba(59, 130, 246, 0.24);
+            color: #bfdbfe;
+        }
+
+        .command-hub.variant-midnight .progress-bar {
+            background: linear-gradient(118deg, #60a5fa, #38bdf8);
+        }
+
+        .command-hub.variant-midnight .stat-item {
+            background: rgba(59, 130, 246, 0.18);
+        }
+
+        .command-hub.variant-sierra {
+            background: linear-gradient(145deg, rgba(208, 250, 249, 0.95), rgba(224, 247, 250, 0.82));
+            border-color: rgba(16, 185, 129, 0.26);
+            box-shadow: 0 32px 72px rgba(45, 212, 191, 0.24);
+        }
+
+        .command-hub.variant-sierra .progress-bar {
+            background: linear-gradient(118deg, #0ea5e9, #10b981);
+        }
+
+        .command-hub.variant-sierra .progress-pill {
+            background: rgba(13, 148, 136, 0.18);
+            color: #047857;
+        }
+
+        .command-hub.variant-sierra .stat-item {
+            background: rgba(45, 212, 191, 0.18);
+        }
+
+        .command-hub.variant-outline {
+            background: rgba(255, 255, 255, 0.72);
+            border: 1.5px dashed rgba(60, 60, 67, 0.28);
+            box-shadow: none;
+        }
+
+        .command-hub.variant-outline .toolbar,
+        .command-hub.variant-outline .progress-section,
+        .command-hub.variant-outline .stat-item {
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px dashed rgba(99, 99, 102, 0.32);
+            box-shadow: none;
+        }
+
+        .command-hub.variant-outline .progress-pill {
+            background: rgba(60, 60, 67, 0.1);
+            color: #1f2937;
+        }
+
+        @media (max-width: 720px) {
+            body { padding: 32px 16px 80px; }
+            .hub-shell { padding: 36px 24px 46px; }
+            .command-toolbar { flex-direction: column; align-items: flex-start; }
+            .command-actions { width: 100%; justify-content: flex-start; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root { background: #0f1118; color: #f5f5f7; }
+            body { background: #0f1118; }
+            .demo-card { background: rgba(24, 26, 34, 0.82); box-shadow: 0 28px 50px rgba(0, 0, 0, 0.65); }
+            .demo-card p { color: rgba(226, 232, 240, 0.72); }
+            .hub-stage { background: linear-gradient(180deg, rgba(34, 37, 48, 0.72), rgba(15, 16, 21, 0.6)); }
+            .hub-shell { background: rgba(20, 24, 32, 0.86); box-shadow: 0 28px 48px rgba(0, 0, 0, 0.65); }
+            .hub-shell::after { border-color: rgba(148, 163, 184, 0.2); }
+            .hub-content { background: rgba(255, 255, 255, 0.08); }
+            .stat-label { color: rgba(226, 232, 240, 0.6); }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="intro">
+            <h1>融合指挥栏 5 套方案</h1>
+            <p class="notes">下列方案按照实际页面的“标题 + 筛选 + 工具栏 + 总体进度”结构重新设计。所有示例均把底部进度条合并到顶部指挥栏，并展示主操作、统计与进度态的完整排布。</p>
+        </section>
+
+        <section class="demo-grid">
+            <article class="demo-card">
+                <div>
+                    <h2>方案一：星辉 Aurora</h2>
+                    <p>采用高透明毛玻璃与蓝色渐变，强调任务面板的未来感。适合保持默认浅色主题的主视觉，带来柔和但有立体层次的观感。</p>
+                </div>
+                <div class="hub-stage">
+                    <div class="hub-shell">
+                        <div class="command-hub variant-aurora">
+                            <div class="command-toolbar">
+                                <div class="command-title">
+                                    <button class="toolbar-btn outline" style="min-width:64px">🌙</button>
+                                    <div>
+                                        <h3>作业完成进度</h3>
+                                        <div class="command-meta">12 项作业已同步 · 预计 2 小时完成</div>
+                                    </div>
+                                </div>
+                                <div class="command-actions">
+                                    <div class="filter-control">
+                                        <button class="filter-toggle" title="筛选作业">
+                                            <svg viewBox="0 0 24 24"><path d="M7 7h10M5 12h14M9 17h6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="16" cy="7" r="1.5"></circle><circle cx="8" cy="12" r="1.5"></circle><circle cx="15" cy="17" r="1.5"></circle></svg>
+                                        </button>
+                                        <div class="filter-summary">显示全部</div>
+                                    </div>
+                                    <div class="command-utility">
+                                        <div class="toolbar">
+                                            <button class="toolbar-btn">导入</button>
+                                            <button class="toolbar-btn">导出</button>
+                                            <button class="toolbar-btn">保存</button>
+                                            <span class="divider"></span>
+                                            <button class="toolbar-btn outline">编辑</button>
+                                        </div>
+                                        <div class="toolbar">
+                                            <button class="toolbar-btn">使用说明</button>
+                                            <span class="divider"></span>
+                                            <button class="toolbar-btn">切换主题</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="progress-section">
+                                <div class="progress-header">
+                                    <div class="progress-title">
+                                        <span>总体完成进度</span>
+                                        <span class="progress-pill">68%</span>
+                                    </div>
+                                    <div class="toggle-icon">▼</div>
+                                </div>
+                                <div class="progress-meter">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar"></div>
+                                    </div>
+                                    <div class="progress-summary">8/12 项完成 · 页数 74/120</div>
+                                </div>
+                                <div class="stats">
+                                    <div class="stat-item">
+                                        <div class="stat-number">8</div>
+                                        <div class="stat-label">已完成</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">3</div>
+                                        <div class="stat-label">进行中</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">1</div>
+                                        <div class="stat-label">未完成</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">12</div>
+                                        <div class="stat-label">总计</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hub-content"></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案二：暮光 Horizon</h2>
+                    <p>暖色调强调每天的节奏感，适合早晚总结或学期冲刺场景。主按钮转为橙粉渐变，营造活跃氛围。</p>
+                </div>
+                <div class="hub-stage">
+                    <div class="hub-shell">
+                        <div class="command-hub variant-horizon">
+                            <div class="command-toolbar">
+                                <div class="command-title">
+                                    <button class="toolbar-btn outline" style="min-width:64px">☀️</button>
+                                    <div>
+                                        <h3>晨间复盘</h3>
+                                        <div class="command-meta">今日目标 5 项 · 已完成 2 项</div>
+                                    </div>
+                                </div>
+                                <div class="command-actions">
+                                    <div class="filter-control">
+                                        <button class="filter-toggle" title="筛选作业">
+                                            <svg viewBox="0 0 24 24"><path d="M7 7h10M5 12h14M9 17h6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="16" cy="7" r="1.5"></circle><circle cx="8" cy="12" r="1.5"></circle><circle cx="15" cy="17" r="1.5"></circle></svg>
+                                        </button>
+                                        <div class="filter-summary">隐藏已完成</div>
+                                    </div>
+                                    <div class="command-utility">
+                                        <div class="toolbar">
+                                            <button class="toolbar-btn">导入</button>
+                                            <button class="toolbar-btn">导出</button>
+                                            <button class="toolbar-btn primary">保存图片</button>
+                                        </div>
+                                        <div class="toolbar">
+                                            <button class="toolbar-btn outline">编辑</button>
+                                            <button class="toolbar-btn">切换主题</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="progress-section">
+                                <div class="progress-header">
+                                    <div class="progress-title">
+                                        <span>今日推进</span>
+                                        <span class="progress-pill">42%</span>
+                                    </div>
+                                    <div class="toggle-icon">▼</div>
+                                </div>
+                                <div class="progress-meter">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width:42%; background: linear-gradient(118deg, #f97316, #ec4899);"></div>
+                                    </div>
+                                    <div class="progress-summary">2/5 项完成 · 页数 15/40</div>
+                                </div>
+                                <div class="stats">
+                                    <div class="stat-item">
+                                        <div class="stat-number">2</div>
+                                        <div class="stat-label">已完成</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">2</div>
+                                        <div class="stat-label">进行中</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">1</div>
+                                        <div class="stat-label">未开始</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-number">5</div>
+                                        <div class="stat-label">总计</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hub-content"></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案三：曜夜 Midnight</h2>
+                    <p>深色路线强调沉浸感，适合夜间学习或暗色主题。使用低调的冷色光晕搭配亮色按钮，视觉重心集中在数据展示。</p>
+                </div>
+                <div class="hub-stage" style="background: linear-gradient(180deg, rgba(18, 20, 28, 0.9), rgba(15, 16, 23, 0.6));">
+                    <div class="hub-shell" style="background: rgba(13, 18, 30, 0.88); color: #e2e8f0;">
+                        <div class="command-hub variant-midnight">
+                            <div class="command-toolbar">
+                                <div class="command-title">
+                                    <button class="toolbar-btn outline" style="min-width:64px; border-color: rgba(148,163,184,0.4); color:#93c5fd;">🌙</button>
+                                    <div>
+                                        <h3 style="margin:0;">夜读进度</h3>
+                                        <div class="command-meta">同步到 iPad · 专注模式已开启</div>
+                                    </div>
+                                </div>
+                                <div class="command-actions">
+                                    <div class="filter-control">
+                                        <button class="filter-toggle" title="筛选作业" style="background: rgba(31,41,55,0.9); border-color: rgba(148,163,184,0.3); color:#e2e8f0;">
+                                            <svg viewBox="0 0 24 24"><path d="M7 7h10M5 12h14M9 17h6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="16" cy="7" r="1.5"></circle><circle cx="8" cy="12" r="1.5"></circle><circle cx="15" cy="17" r="1.5"></circle></svg>
+                                        </button>
+                                        <div class="filter-summary">隐藏未开始</div>
+                                    </div>
+                                    <div class="command-utility">
+                                        <div class="toolbar">
+                                            <button class="toolbar-btn">导入</button>
+                                            <button class="toolbar-btn">导出</button>
+                                            <button class="toolbar-btn" style="color:#93c5fd;">保存 PNG</button>
+                                        </div>
+                                        <div class="toolbar">
+                                            <button class="toolbar-btn outlinel" style="color:#93c5fd; border:1px solid rgba(148,163,184,0.35);">编辑</button>
+                                            <button class="toolbar-btn" style="color:#93c5fd;">切换主题</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="progress-section" style="background: rgba(17,24,39,0.78); border-color: rgba(148,163,184,0.32);">
+                                <div class="progress-header">
+                                    <div class="progress-title">
+                                        <span>总体完成进度</span>
+                                        <span class="progress-pill">76%</span>
+                                    </div>
+                                    <div class="toggle-icon">▼</div>
+                                </div>
+                                <div class="progress-meter">
+                                    <div class="progress-bar-container" style="background: rgba(96,165,250,0.24);">
+                                        <div class="progress-bar" style="width:76%; background: linear-gradient(118deg,#60a5fa,#38bdf8);"></div>
+                                    </div>
+                                    <div class="progress-summary">22/29 项完成 · 页数 128/160</div>
+                                </div>
+                                <div class="stats">
+                                    <div class="stat-item" style="background: rgba(59,130,246,0.2);">
+                                        <div class="stat-number">22</div>
+                                        <div class="stat-label">已完成</div>
+                                    </div>
+                                    <div class="stat-item" style="background: rgba(59,130,246,0.2);">
+                                        <div class="stat-number">5</div>
+                                        <div class="stat-label">进行中</div>
+                                    </div>
+                                    <div class="stat-item" style="background: rgba(59,130,246,0.2);">
+                                        <div class="stat-number">2</div>
+                                        <div class="stat-label">待处理</div>
+                                    </div>
+                                    <div class="stat-item" style="background: rgba(59,130,246,0.2);">
+                                        <div class="stat-number">29</div>
+                                        <div class="stat-label">总计</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hub-content" style="background: rgba(255,255,255,0.06);"></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案四：雪岭 Sierra</h2>
+                    <p>青绿配色强调效率与沉稳，适合需要展示大量统计的管理视图。按钮与数据使用冷色调渐变，营造轻盈科技感。</p>
+                </div>
+                <div class="hub-stage">
+                    <div class="hub-shell">
+                        <div class="command-hub variant-sierra">
+                            <div class="command-toolbar">
+                                <div class="command-title">
+                                    <button class="toolbar-btn outline" style="min-width:64px; border-color: rgba(16,185,129,0.35); color:#0f766e;">🍃</button>
+                                    <div>
+                                        <h3>周冲刺面板</h3>
+                                        <div class="command-meta">Sprint 2 · 剩余 3 天</div>
+                                    </div>
+                                </div>
+                                <div class="command-actions">
+                                    <div class="filter-control">
+                                        <button class="filter-toggle" title="筛选作业" style="border-color: rgba(45,212,191,0.4);">
+                                            <svg viewBox="0 0 24 24"><path d="M7 7h10M5 12h14M9 17h6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="16" cy="7" r="1.5"></circle><circle cx="8" cy="12" r="1.5"></circle><circle cx="15" cy="17" r="1.5"></circle></svg>
+                                        </button>
+                                        <div class="filter-summary">隐藏进行中</div>
+                                    </div>
+                                    <div class="command-utility">
+                                        <div class="toolbar">
+                                            <button class="toolbar-btn">导入</button>
+                                            <button class="toolbar-btn">导出</button>
+                                            <button class="toolbar-btn" style="color:#0f766e;">同步日历</button>
+                                            <span class="divider"></span>
+                                            <button class="toolbar-btn outline" style="border-color: rgba(16,185,129,0.4); color:#047857;">编辑</button>
+                                        </div>
+                                        <div class="toolbar">
+                                            <button class="toolbar-btn">帮助</button>
+                                            <button class="toolbar-btn">切换主题</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="progress-section" style="background: rgba(255,255,255,0.82); border-color: rgba(16,185,129,0.26);">
+                                <div class="progress-header">
+                                    <div class="progress-title">
+                                        <span>总体完成进度</span>
+                                        <span class="progress-pill" style="background: rgba(16,185,129,0.18); color:#047857;">53%</span>
+                                    </div>
+                                    <div class="toggle-icon" style="background: rgba(16,185,129,0.2); color:#0f766e;">▼</div>
+                                </div>
+                                <div class="progress-meter">
+                                    <div class="progress-bar-container" style="background: rgba(16,185,129,0.2);">
+                                        <div class="progress-bar" style="width:53%; background: linear-gradient(118deg,#0ea5e9,#10b981);"></div>
+                                    </div>
+                                    <div class="progress-summary">16/30 项完成 · 页数 64/120</div>
+                                </div>
+                                <div class="stats">
+                                    <div class="stat-item" style="background: rgba(16,185,129,0.14);">
+                                        <div class="stat-number">16</div>
+                                        <div class="stat-label">已完成</div>
+                                    </div>
+                                    <div class="stat-item" style="background: rgba(16,185,129,0.14);">
+                                        <div class="stat-number">9</div>
+                                        <div class="stat-label">进行中</div>
+                                    </div>
+                                    <div class="stat-item" style="background: rgba(16,185,129,0.14);">
+                                        <div class="stat-number">5</div>
+                                        <div class="stat-label">未开始</div>
+                                    </div>
+                                    <div class="stat-item" style="background: rgba(16,185,129,0.14);">
+                                        <div class="stat-number">30</div>
+                                        <div class="stat-label">总计</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hub-content"></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案五：无界 Outline</h2>
+                    <p>极简线条风格，借助虚线与留白营造轻量视觉。适合作为打印或分享的低色度版本，方便搭配不同背景图。</p>
+                </div>
+                <div class="hub-stage">
+                    <div class="hub-shell" style="box-shadow: 0 18px 38px rgba(15,23,42,0.12);">
+                        <div class="command-hub variant-outline">
+                            <div class="command-toolbar" style="gap:18px;">
+                                <div class="command-title">
+                                    <button class="toolbar-btn outline" style="min-width:64px; border-style: dashed;">📝</button>
+                                    <div>
+                                        <h3>学习计划总控</h3>
+                                        <div class="command-meta">以极简模式展示 · 适合打印与分享</div>
+                                    </div>
+                                </div>
+                                <div class="command-actions">
+                                    <div class="filter-control">
+                                        <button class="filter-toggle" title="筛选作业" style="border-style:dashed;">
+                                            <svg viewBox="0 0 24 24"><path d="M7 7h10M5 12h14M9 17h6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="16" cy="7" r="1.5"></circle><circle cx="8" cy="12" r="1.5"></circle><circle cx="15" cy="17" r="1.5"></circle></svg>
+                                        </button>
+                                        <div class="filter-summary">显示全部</div>
+                                    </div>
+                                    <div class="command-utility">
+                                        <div class="toolbar" style="border-style:dashed; box-shadow:none;">
+                                            <button class="toolbar-btn">导入</button>
+                                            <button class="toolbar-btn">导出</button>
+                                            <button class="toolbar-btn">保存</button>
+                                        </div>
+                                        <div class="toolbar" style="border-style:dashed; box-shadow:none;">
+                                            <button class="toolbar-btn">编辑</button>
+                                            <button class="toolbar-btn">主题</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="progress-section" style="background: rgba(255,255,255,0.76); border-style:dashed;">
+                                <div class="progress-header">
+                                    <div class="progress-title">
+                                        <span>总体完成进度</span>
+                                        <span class="progress-pill" style="background: rgba(60,60,67,0.12); color:#1f2937;">60%</span>
+                                    </div>
+                                    <div class="toggle-icon" style="background: rgba(60,60,67,0.12); color:#1f2937;">▼</div>
+                                </div>
+                                <div class="progress-meter">
+                                    <div class="progress-bar-container" style="background: rgba(60,60,67,0.12);">
+                                        <div class="progress-bar" style="width:60%; background: rgba(28,28,30,0.8);"></div>
+                                    </div>
+                                    <div class="progress-summary">18/30 项完成 · 页数 70/120</div>
+                                </div>
+                                <div class="stats">
+                                    <div class="stat-item" style="background: transparent; border: 1px dashed rgba(60,60,67,0.25);">
+                                        <div class="stat-number">18</div>
+                                        <div class="stat-label">已完成</div>
+                                    </div>
+                                    <div class="stat-item" style="background: transparent; border: 1px dashed rgba(60,60,67,0.25);">
+                                        <div class="stat-number">7</div>
+                                        <div class="stat-label">进行中</div>
+                                    </div>
+                                    <div class="stat-item" style="background: transparent; border: 1px dashed rgba(60,60,67,0.25);">
+                                        <div class="stat-number">5</div>
+                                        <div class="stat-label">未开始</div>
+                                    </div>
+                                    <div class="stat-item" style="background: transparent; border: 1px dashed rgba(60,60,67,0.25);">
+                                        <div class="stat-number">30</div>
+                                        <div class="stat-label">总计</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hub-content"></div>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+</body>
+</html>

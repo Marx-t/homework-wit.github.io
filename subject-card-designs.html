@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学科卡片 UI 设计方案</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f5f6fb;
+            color: #1d1d1f;
+        }
+
+        body {
+            margin: 0;
+            padding: 48px 24px 96px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .page {
+            width: min(1080px, 100%);
+            display: grid;
+            gap: 36px;
+        }
+
+        .intro { display: grid; gap: 12px; }
+
+        h1 {
+            margin: 0;
+            font-size: 2.4rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .notes {
+            font-size: 0.96rem;
+            line-height: 1.6;
+            color: #6e6e73;
+            max-width: 780px;
+        }
+
+        .demo-grid { display: grid; gap: 32px; }
+
+        .demo-card {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 28px 30px;
+            box-shadow: 0 20px 48px rgba(15, 23, 42, 0.1);
+            display: grid;
+            gap: 20px;
+        }
+
+        .demo-card h2 { margin: 0; font-size: 1.45rem; letter-spacing: -0.01em; }
+        .demo-card p { margin: 0; font-size: 0.96rem; line-height: 1.6; color: #6e6e73; }
+
+        .preview-stage {
+            background: linear-gradient(180deg, rgba(233, 237, 251, 0.9), rgba(219, 225, 244, 0.28));
+            border-radius: 32px;
+            padding: 40px 28px;
+        }
+
+        .subject-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .subject-row {
+            display: grid;
+            gap: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+
+        .subject-card {
+            border-radius: 24px;
+            padding: 22px 24px;
+            display: grid;
+            gap: 16px;
+            position: relative;
+            transition: transform 0.24s ease, box-shadow 0.24s ease;
+        }
+
+        .subject-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+        }
+
+        .subject-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .subject-title { font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; }
+        .subject-meta { font-size: 0.86rem; color: rgba(28, 28, 30, 0.6); }
+
+        .subject-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.18);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(118deg, #2563eb, #38bdf8);
+        }
+
+        .progress-value { font-size: 0.9rem; font-weight: 600; color: #2563eb; }
+
+        .tasks { display: grid; gap: 10px; }
+
+        .task {
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.68);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.92rem;
+            letter-spacing: -0.01em;
+        }
+
+        .task span.status {
+            font-size: 0.82rem;
+            font-weight: 600;
+            border-radius: 999px;
+            padding: 4px 10px;
+        }
+
+        .status.done { background: rgba(52, 199, 89, 0.14); color: #2f9e44; }
+        .status.doing { background: rgba(255, 149, 0, 0.18); color: #c2410c; }
+        .status.todo { background: rgba(255, 55, 95, 0.16); color: #c2255c; }
+
+        /* Variant specific styling */
+        .subject-card.variant-glass {
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(210, 220, 255, 0.6);
+            backdrop-filter: blur(18px) saturate(160%);
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+        }
+
+        .subject-card.variant-glass::after {
+            content: "";
+            position: absolute;
+            inset: 12px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+        }
+
+        .subject-card.variant-glass .task { background: rgba(255, 255, 255, 0.82); }
+
+        .subject-card.variant-accent {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(234, 244, 255, 0.82));
+            border: 1px solid rgba(160, 208, 255, 0.48);
+            padding-top: 30px;
+        }
+
+        .subject-card.variant-accent::before {
+            content: "";
+            position: absolute;
+            top: -12px;
+            left: 26px;
+            right: 26px;
+            height: 28px;
+            border-radius: 18px;
+            background: linear-gradient(118deg, rgba(129, 140, 248, 0.5), rgba(99, 102, 241, 0.35));
+            box-shadow: 0 16px 32px rgba(99, 102, 241, 0.26);
+        }
+
+        .subject-card.variant-accent .subject-head { flex-direction: column; align-items: flex-start; gap: 6px; }
+        .subject-card.variant-accent .task { background: rgba(246, 250, 255, 0.86); }
+        .subject-card.variant-accent .progress-track { background: rgba(129, 140, 248, 0.22); }
+        .subject-card.variant-accent .progress-fill { background: linear-gradient(118deg, #6366f1, #a855f7); }
+        .subject-card.variant-accent .progress-value { color: #4f46e5; }
+
+        .subject-card.variant-notebook {
+            background: #fdfdfd;
+            border: 1px solid rgba(210, 214, 220, 0.8);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+
+        .subject-card.variant-notebook::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(180deg, transparent 0 30px, rgba(210, 214, 220, 0.24) 30px 31px);
+            border-radius: 24px;
+            pointer-events: none;
+        }
+
+        .subject-card.variant-notebook .subject-head { border-bottom: 1px dashed rgba(148, 163, 184, 0.6); padding-bottom: 12px; }
+        .subject-card.variant-notebook .task { background: rgba(248, 249, 252, 0.76); border: 1px solid rgba(210,214,220,0.6); }
+        .subject-card.variant-notebook .progress-track { background: rgba(148, 163, 184, 0.28); }
+        .subject-card.variant-notebook .progress-fill { background: rgba(28, 28, 30, 0.8); }
+        .subject-card.variant-notebook .progress-value { color: #1f2937; }
+
+        .subject-card.variant-compact {
+            background: rgba(255, 255, 255, 0.94);
+            border: none;
+            box-shadow: 0 18px 34px rgba(15, 23, 42, 0.14);
+            padding: 20px 22px;
+        }
+
+        .subject-card.variant-compact .subject-head { align-items: center; }
+        .subject-card.variant-compact .subject-meta { font-size: 0.8rem; text-transform: uppercase; color: rgba(28,28,30,0.45); }
+        .subject-card.variant-compact .task { border-radius: 12px; background: rgba(37, 99, 235, 0.08); }
+
+        .subject-card.variant-outline {
+            background: rgba(255, 255, 255, 0.78);
+            border: 1.5px dashed rgba(60, 60, 67, 0.28);
+            box-shadow: none;
+        }
+
+        .subject-card.variant-outline .task {
+            background: transparent;
+            border: 1px dashed rgba(60, 60, 67, 0.26);
+        }
+
+        .subject-card.variant-outline .progress-track { background: rgba(60, 60, 67, 0.16); }
+        .subject-card.variant-outline .progress-fill { background: rgba(28, 28, 30, 0.85); }
+        .subject-card.variant-outline .progress-value { color: #1f2937; }
+
+        @media (max-width: 740px) {
+            body { padding: 32px 16px 80px; }
+            .subject-row { grid-template-columns: 1fr; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root { background: #0f1118; color: #f5f5f7; }
+            body { background: #0f1118; }
+            .demo-card { background: rgba(24, 26, 34, 0.82); box-shadow: 0 28px 48px rgba(0,0,0,0.6); }
+            .demo-card p { color: rgba(226, 232, 240, 0.72); }
+            .preview-stage { background: linear-gradient(180deg, rgba(26, 31, 44, 0.78), rgba(18, 19, 26, 0.6)); }
+            .subject-card.variant-outline { border-color: rgba(200, 213, 230, 0.32); }
+            .subject-card.variant-outline .task { border-color: rgba(200, 213, 230, 0.24); }
+            .subject-card.variant-notebook { background: rgba(24, 26, 34, 0.92); border-color: rgba(148, 163, 184, 0.42); }
+            .subject-card.variant-compact { background: rgba(31, 35, 46, 0.92); }
+            .subject-card.variant-compact .task { background: rgba(59, 130, 246, 0.18); }
+            .subject-card.variant-glass { background: rgba(32, 35, 45, 0.68); border-color: rgba(148, 163, 184, 0.32); }
+            .subject-card.variant-glass .task { background: rgba(39, 43, 56, 0.68); }
+            .subject-card.variant-accent { background: linear-gradient(135deg, rgba(44, 52, 90, 0.92), rgba(30, 41, 59, 0.88)); border-color: rgba(99,102,241,0.4); }
+            .subject-card.variant-accent .task { background: rgba(49, 56, 85, 0.72); }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="intro">
+            <h1>学科卡片 5 套方案</h1>
+            <p class="notes">基于现有页面结构，以下每个方案都保留“学科标题、总体进度、作业列表”核心信息，同时尝试不同的视觉语言与交互暗示，便于嵌入实际页面中自由组合。</p>
+        </section>
+
+        <section class="demo-grid">
+            <article class="demo-card">
+                <div>
+                    <h2>方案一：Glass Stack</h2>
+                    <p>玻璃层叠配合柔和光晕，卡片细节与主界面指挥栏保持统一，适合主视觉较亮、需要透视感的场景。</p>
+                </div>
+                <div class="preview-stage">
+                    <div class="subject-grid">
+                        <div class="subject-row">
+                            <div class="subject-card variant-glass">
+                                <div class="subject-head">
+                                    <div>
+                                        <div class="subject-title">语文</div>
+                                        <div class="subject-meta">古诗赏析 · 2 小时前更新</div>
+                                    </div>
+                                    <div class="progress-value">86%</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:86%;"></div></div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>背诵《木兰诗》</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>练习册 P32-36</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>现代文理解题</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="subject-card variant-glass">
+                                <div class="subject-head">
+                                    <div>
+                                        <div class="subject-title">数学</div>
+                                        <div class="subject-meta">函数与导数 · 晚间复盘</div>
+                                    </div>
+                                    <div class="progress-value">48%</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:48%;"></div></div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>课堂作业 P18</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>小测回顾</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>例题整理</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案二：Accent Pillars</h2>
+                    <p>顶部悬浮胶囊强调重点学科，整卡呈现略带仪式感的未来风，适合期末冲刺或重要科目。</p>
+                </div>
+                <div class="preview-stage">
+                    <div class="subject-grid">
+                        <div class="subject-row">
+                            <div class="subject-card variant-accent">
+                                <div class="subject-head">
+                                    <div class="subject-title">物理</div>
+                                    <div class="subject-meta">电磁感应实验记要</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:62%; background: linear-gradient(118deg,#6366f1,#a855f7);"></div></div>
+                                    <div class="progress-value" style="color:#4f46e5;">62%</div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>实验报告初稿</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>课后习题 3-5</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>课堂笔记整理</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="subject-card variant-accent">
+                                <div class="subject-head">
+                                    <div class="subject-title">化学</div>
+                                    <div class="subject-meta">有机推断专项</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:35%; background: linear-gradient(118deg,#6366f1,#a855f7);"></div></div>
+                                    <div class="progress-value" style="color:#4f46e5;">35%</div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>知识图谱整理</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>错题再练</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>课堂例题重演</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案三：Notebook Tabs</h2>
+                    <p>模拟记录本纸张与虚线分割，更偏文艺与复古风格，适合语文、历史等以阅读笔记为主的学科。</p>
+                </div>
+                <div class="preview-stage">
+                    <div class="subject-grid">
+                        <div class="subject-row">
+                            <div class="subject-card variant-notebook">
+                                <div class="subject-head">
+                                    <div>
+                                        <div class="subject-title">历史</div>
+                                        <div class="subject-meta">近代史纲要 · 重点回顾</div>
+                                    </div>
+                                    <div class="progress-value" style="color:#1f2937;">75%</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:75%; background: rgba(28,28,30,0.78);"></div></div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>第一次工业革命</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>辛亥革命提纲</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>改革开放年表</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="subject-card variant-notebook">
+                                <div class="subject-head">
+                                    <div>
+                                        <div class="subject-title">地理</div>
+                                        <div class="subject-meta">地貌专题 · 课堂记录</div>
+                                    </div>
+                                    <div class="progress-value" style="color:#1f2937;">54%</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:54%; background: rgba(28,28,30,0.78);"></div></div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>河流地貌图</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>高原区对比</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>地理术语摘录</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案四：Compact Blocks</h2>
+                    <p>卡片整体更紧凑，信息密度高但仍保持 Apple 风，适合移动端或需要一次展示更多学科时使用。</p>
+                </div>
+                <div class="preview-stage">
+                    <div class="subject-grid">
+                        <div class="subject-row">
+                            <div class="subject-card variant-compact">
+                                <div class="subject-head">
+                                    <div>
+                                        <div class="subject-title">英语</div>
+                                        <div class="subject-meta">LISTENING</div>
+                                    </div>
+                                    <div class="progress-value">44%</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:44%;"></div></div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>课文随堂录音</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>听力填空练习</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="subject-card variant-compact">
+                                <div class="subject-head">
+                                    <div>
+                                        <div class="subject-title">生物</div>
+                                        <div class="subject-meta">GENETICS</div>
+                                    </div>
+                                    <div class="progress-value">91%</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:91%;"></div></div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>孟德尔遗传定律</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>实验对照表</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="subject-card variant-compact">
+                                <div class="subject-head">
+                                    <div>
+                                        <div class="subject-title">信息技术</div>
+                                        <div class="subject-meta">CODING</div>
+                                    </div>
+                                    <div class="progress-value">28%</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:28%;"></div></div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>前端页面重构</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>算法练习</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案五：Gridline Outline</h2>
+                    <p>虚线轮廓与单色进度表达，保持极简格调，适合作为打印稿或搭配多彩背景的分享模板。</p>
+                </div>
+                <div class="preview-stage">
+                    <div class="subject-grid">
+                        <div class="subject-row">
+                            <div class="subject-card variant-outline">
+                                <div class="subject-head">
+                                    <div>
+                                        <div class="subject-title">政治</div>
+                                        <div class="subject-meta">思辨题拆解</div>
+                                    </div>
+                                    <div class="progress-value" style="color:#1f2937;">58%</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:58%; background: rgba(28,28,30,0.85);"></div></div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>热点时评整理</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>课后思考题</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>概念对照</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="subject-card variant-outline">
+                                <div class="subject-head">
+                                    <div>
+                                        <div class="subject-title">艺术</div>
+                                        <div class="subject-meta">色彩练习</div>
+                                    </div>
+                                    <div class="progress-value" style="color:#1f2937;">32%</div>
+                                </div>
+                                <div class="subject-progress">
+                                    <div class="progress-track"><div class="progress-fill" style="width:32%; background: rgba(28,28,30,0.85);"></div></div>
+                                </div>
+                                <div class="tasks">
+                                    <div class="task">
+                                        <span>水彩渐变练习</span>
+                                        <span class="status doing">进行中</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>构图草图</span>
+                                        <span class="status todo">未开始</span>
+                                    </div>
+                                    <div class="task">
+                                        <span>灵感板整理</span>
+                                        <span class="status done">已完成</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+</body>
+</html>

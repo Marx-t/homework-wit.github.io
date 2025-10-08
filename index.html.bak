@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<!-- 所有 UI 设计必须符合 Apple 审美，做到 Only Apple can do 的效果。 -->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国庆作业进度</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 40px 20px 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            color: #1d1d1f;
+            font-size: 2.5em;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #007aff;
+            color: white;
+        }
+
+        .btn:hover {
+            background: #0051d5;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #86868b;
+        }
+
+        .btn-secondary:hover {
+            background: #6e6e73;
+        }
+
+        .subject-section {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            position: relative;
+            transition: box-shadow .24s cubic-bezier(0.4, 0, 0.2, 1), transform .24s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform, box-shadow;
+        }
+        .subject-section:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+
+        .subject-section.draggable-subject {
+            cursor: move;
+        }
+
+        .subject-section.dragging-subject {
+            opacity: 0.5;
+        }
+
+        .subject-section.drag-over-subject {
+            border: 2px dashed #007aff;
+        }
+
+        .subject-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .subject-title {
+            color: #1d1d1f;
+            font-size: 1.3em;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .subject-actions {
+            display: none;
+            gap: 8px;
+        }
+
+        .subject-section.edit-mode .subject-actions {
+            display: flex;
+        }
+
+        .icon-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: #e5e5e7;
+        }
+
+        .icon-btn.delete {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .icon-btn.delete:hover {
+            background: #d32f2f;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        .card.draggable {
+            cursor: move;
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+        }
+
+        .card.drag-over {
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .card.completed {
+            background: #34c759;
+        }
+
+        .card.in-progress {
+            background: #ff9500;
+        }
+
+        .card.not-started {
+            background: #ff3b30;
+        }
+
+        .card.add-card {
+            background: #f5f5f7;
+            color: #007aff;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            border: 2px dashed #007aff;
+        }
+
+        .edit-mode .card.add-card {
+            display: flex;
+        }
+
+        .card-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .edit-mode .card-delete {
+            display: flex;
+        }
+
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .card-status {
+            font-size: 0.9em;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        /* progress controls */
+        /* hover to reveal controls */
+        .hover-controls { margin-top: 8px; opacity: 0; max-height: 0; overflow: hidden; pointer-events: none; transition: opacity .16s ease, max-height .16s ease; }
+        .card:hover .hover-controls, .card:focus-within .hover-controls, .card.show-controls .hover-controls { opacity: 1; max-height: 200px; pointer-events: auto; }
+        .pages-controls { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+        .pages-controls .mini-input { transition: background-color .18s ease, transform .18s ease; }
+        .pages-controls .mini-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(10,132,255,0.25); }
+        .pages-controls .mini-input:active { transform: scale(0.99); }
+        .mini-input { width: 72px; height: 28px; border-radius: 6px; border: 0; padding: 4px 6px; background: rgba(255,255,255,0.95); color: #1d1d1f; }
+        .page-input { width: 80px; }
+        .pages-controls .slash { opacity: 0.9; }
+        [data-theme="dark"] .mini-input { background: rgba(255,255,255,0.9); color: #1d1d1f; }
+        .sub-title { margin-top: 16px; font-size: 0.95em; color: #6e6e73; font-weight: 600; }
+        [data-theme="dark"] .sub-title { color: #a1a1a6; }
+
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            display: flex;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity .24s cubic-bezier(0.4,0,0.2,1), visibility 0s linear .24s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition: opacity .24s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: translateY(8px) scale(0.995);
+            opacity: 0;
+            transition: transform .28s cubic-bezier(0.22,0.61,0.36,1), opacity .2s ease;
+        }
+        .modal.active .modal-content { transform: none; opacity: 1; }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1d1d1f;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1d1d1f;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007aff;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
+        }
+
+        .progress-section {
+            background: white;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .progress-header {
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .progress-header:hover {
+            background: #fafafa;
+        }
+
+        .progress-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1d1d1f;
+            letter-spacing: -0.01em;
+        }
+
+        .toggle-icon {
+            font-size: 1.2em;
+            color: #86868b;
+            transition: transform 0.3s;
+        }
+
+        .toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .progress-content {
+            max-height: 500px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 24px 24px;
+        }
+
+        .progress-content.collapsed {
+            max-height: 0;
+            padding: 0 24px;
+        }
+
+        /* 动态预留空隙（与进度悬浮窗联动） */
+        #progressSpacer { height: 0; transition: height 0.3s ease; }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #e5e5e7;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #007aff;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.95em;
+            color: #1d1d1f;
+            font-weight: 600;
+        }
+
+        /* Subject mini progress */
+        .subject-progress { display:flex; align-items:center; gap:10px; margin: -4px 0 12px; }
+        .subject-progress .progress-bar-container { flex: 1; }
+        .subject-progress-text { font-size: 0.95em; font-weight: 600; color: #1d1d1f; min-width: 44px; text-align: right; letter-spacing: -0.01em; }
+        [data-theme='dark'] .subject-progress-text { color: #f5f5f7; }
+        /* when any progress bar completes */
+        .progress-bar.complete { background: #34c759; }
+        [data-theme='dark'] .progress-bar.complete { background: #30d158; }
+
+        .stats {
+            display: grid;
+            /* 自适应列数：每块最小 160px，最大均分 */
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            padding: 12px;
+            background: #f5f5f7;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #1d1d1f;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-label {
+            color: #86868b;
+            font-size: 0.85em;
+            margin-top: 2px;
+            font-weight: 500;
+        }
+
+        .float-btn {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 12px 20px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            color: #007aff;
+            border: none;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: -0.01em;
+        }
+
+        .float-btn:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-50%) scale(1.05);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .float-btn:active {
+            transform: translateY(-50%) scale(0.98);
+        }
+
+        .float-btn-icon {
+            font-size: 1.2em;
+        }
+
+        .help-btn {
+            position: fixed;
+            left: 30px;
+            top: 30px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            color: #007aff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .help-btn:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .help-btn:active {
+            transform: scale(0.95);
+        }
+
+        .help-content {
+            line-height: 1.6;
+        }
+
+        .help-content h3 {
+            color: #1d1d1f;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .help-content h3:first-child {
+            margin-top: 0;
+        }
+
+        .help-content p {
+            color: #6e6e73;
+            margin-bottom: 8px;
+        }
+
+        .help-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .help-content li {
+            color: #6e6e73;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .help-content li:before {
+            content: "•";
+            position: absolute;
+            left: 6px;
+            color: #007aff;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .header-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .float-btn {
+                right: 20px;
+                padding: 10px 16px;
+                font-size: 0.85em;
+            }
+
+            .float-btn-icon {
+                font-size: 1em;
+            }
+
+            .help-btn {
+                left: 20px;
+                top: 20px;
+                width: 32px;
+                height: 32px;
+                font-size: 1em;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            color: #86868b;
+            font-size: 0.85em;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            margin: 60px 0 40px;
+            padding: 0 20px;
+        }
+
+        .footer-divider {
+            margin: 0 8px;
+            opacity: 0.6;
+        }
+
+        @media (max-width: 768px) {
+            .footer {
+                font-size: 0.8em;
+                margin: 40px 0 30px;
+            }
+        /* 主题：基础与暗色覆盖 */
+        :root { color-scheme: light; }
+        [data-theme='dark'] { color-scheme: dark; }
+
+        /* 右上角胶囊按钮（Apple 风格） */
+        .tool-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            flex: 0 0 auto;
+        }
+        .tool-btn:hover { background: #e5e5e7; transform: translateY(-1px); }
+
+        /* 暗色覆盖（贴近 Apple 系统色板） */
+        [data-theme='dark'] body { background: #000000; color: #f5f5f7; }
+        [data-theme='dark'] h1,
+        [data-theme='dark'] .subject-title,
+        [data-theme='dark'] .modal-title,
+        [data-theme='dark'] .form-label,
+        [data-theme='dark'] .progress-title,
+        [data-theme='dark'] .stat-number { color: #f5f5f7; }
+
+        [data-theme='dark'] .subject-section,
+        [data-theme='dark'] .modal-content,
+        [data-theme='dark'] .progress-section { background: #1c1c1e; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+
+        [data-theme='dark'] .icon-btn,
+        [data-theme='dark'] .stat-item,
+        [data-theme='dark'] .card.add-card { background: #2c2c2e; color: #f5f5f7; }
+        [data-theme='dark'] .icon-btn:hover { background: #3a3a3c; }
+
+        [data-theme='dark'] .btn { background: #0a84ff; }
+        [data-theme='dark'] .btn:hover { background: #0060df; }
+        [data-theme='dark'] .btn-secondary { background: #636366; }
+        [data-theme='dark'] .btn-secondary:hover { background: #525255; }
+
+        [data-theme='dark'] .progress-header:hover { background: rgba(255,255,255,0.04); }
+        [data-theme='dark'] .toggle-icon,
+        [data-theme='dark'] .stat-label,
+        [data-theme='dark'] .help-content p,
+        [data-theme='dark'] .help-content li,
+        [data-theme='dark'] .footer { color: #a1a1a6; }
+        [data-theme='dark'] .help-content li:before { color: #0a84ff; }
+
+        [data-theme='dark'] .progress-bar-container { background: #2c2c2e; }
+        [data-theme='dark'] .progress-bar { background: #0a84ff; }
+
+        [data-theme='dark'] .card.add-card { color: #0a84ff; border-color: #0a84ff; }
+
+        [data-theme='dark'] .float-btn,
+        [data-theme='dark'] .help-btn { background: rgba(28,28,30,0.72); color: #0a84ff; }
+        [data-theme='dark'] .float-btn:hover,
+        [data-theme='dark'] .help-btn:hover { background: rgba(28,28,30,0.85); }
+
+        [data-theme='dark'] .form-input { border-color: #2c2c2e; background: #2c2c2e; color: #f5f5f7; }
+        [data-theme='dark'] .form-input:focus { border-color: #0a84ff; }
+
+        [data-theme='dark'] .subject-section.drag-over-subject { border-color: #0a84ff; }
+        [data-theme='dark'] .card-delete { background: rgba(255,255,255,0.2); }
+
+        [data-theme='dark'] .tool-btn { background: #2c2c2e; color: #f5f5f7; }
+        [data-theme='dark'] .tool-btn:hover { background: #3a3a3c; }
+        }
+        /* 主题：基础与暗色覆盖 */
+        :root { color-scheme: light; }
+        [data-theme='dark'] { color-scheme: dark; }
+
+        /* 右上角胶囊按钮（Apple 风格） */
+        .tool-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            flex: 0 0 auto;
+        }
+        .tool-btn:hover { background: #e5e5e7; transform: translateY(-1px); }
+
+        .tool-text-btn { width: auto; min-width: 36px; height: 36px; padding: 0 10px; font-weight: 600; }
+        .tool-btn:active { transform: scale(0.98); }
+
+
+        /* 暗色覆盖（贴近 Apple 系统色板） */
+        [data-theme='dark'] body { background: #000000; color: #f5f5f7; }
+        [data-theme='dark'] h1,
+        [data-theme='dark'] .subject-title,
+        [data-theme='dark'] .modal-title,
+        [data-theme='dark'] .form-label,
+        [data-theme='dark'] .progress-title,
+        [data-theme='dark'] .stat-number { color: #f5f5f7; }
+
+        [data-theme='dark'] .subject-section,
+        [data-theme='dark'] .modal-content,
+        [data-theme='dark'] .progress-section { background: #1c1c1e; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+
+        [data-theme='dark'] .icon-btn,
+        [data-theme='dark'] .stat-item,
+        [data-theme='dark'] .card.add-card { background: #2c2c2e; color: #f5f5f7; }
+        [data-theme='dark'] .icon-btn:hover { background: #3a3a3c; }
+
+        [data-theme='dark'] .btn { background: #0a84ff; }
+        [data-theme='dark'] .btn:hover { background: #0060df; }
+        [data-theme='dark'] .btn-secondary { background: #636366; }
+        [data-theme='dark'] .btn-secondary:hover { background: #525255; }
+
+        [data-theme='dark'] .progress-header:hover { background: rgba(255,255,255,0.04); }
+        [data-theme='dark'] .toggle-icon,
+        [data-theme='dark'] .stat-label,
+        [data-theme='dark'] .help-content p,
+        [data-theme='dark'] .help-content li,
+        [data-theme='dark'] .footer { color: #a1a1a6; }
+        [data-theme='dark'] .help-content li:before { color: #0a84ff; }
+
+        [data-theme='dark'] .progress-bar-container { background: #2c2c2e; }
+        [data-theme='dark'] .progress-bar { background: #0a84ff; }
+
+        [data-theme='dark'] .card.add-card { color: #0a84ff; border-color: #0a84ff; }
+
+        [data-theme='dark'] .float-btn,
+        [data-theme='dark'] .help-btn { background: rgba(28,28,30,0.72); color: #0a84ff; }
+        [data-theme='dark'] .float-btn:hover,
+        [data-theme='dark'] .help-btn:hover { background: rgba(28,28,30,0.85); }
+
+        [data-theme='dark'] .form-input { border-color: #2c2c2e; background: #2c2c2e; color: #f5f5f7; }
+        [data-theme='dark'] .form-input:focus { border-color: #0a84ff; }
+
+        [data-theme='dark'] .subject-section.drag-over-subject { border-color: #0a84ff; }
+        [data-theme='dark'] .card-delete { background: rgba(255,255,255,0.2); }
+
+        [data-theme='dark'] .tool-btn { background: #2c2c2e; color: #f5f5f7; }
+        [data-theme='dark'] .tool-btn:hover { background: #3a3a3c; }
+    
+        /* 标题行与移动端位置优化 */
+        .title-row { display: flex; align-items: center; gap: 10px; }
+        #themeToggleMobile { display: none; }
+        @media (max-width: 768px) {
+            #themeToggleMobile { display: inline-flex; }
+            #themeToggle { display: none; }
+        }
+
+        /* 三段模式选择 Popover */
+        .theme-popover {
+            position: fixed;
+            min-width: 180px;
+            background: #ffffff;
+            color: #1d1d1f;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.20);
+            padding: 8px;
+            z-index: 3000;
+            border: 1px solid rgba(0,0,0,0.06);
+            display: none;
+            overflow: hidden; /* 让子项 hover 背景在圆角内裁切 */
+            opacity: 0;
+            transform: translateY(-6px) scale(0.98);
+            transition: transform .22s cubic-bezier(0.22,0.61,0.36,1), opacity .18s ease;
+        }
+        .theme-popover.active { display: block; opacity: 1; transform: none; }
+        .theme-popover .item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 10px; cursor: pointer;
+        }
+        .theme-popover .item:hover { background: #f5f5f7; }
+        .theme-popover .check { margin-left: auto; opacity: 0.8; visibility: hidden; }
+        .theme-popover .item.active .check { visibility: visible; }
+        [data-theme='dark'] .theme-popover { background: #1c1c1e; color:#f5f5f7; border-color: rgba(255,255,255,0.08); box-shadow: 0 16px 44px rgba(0,0,0,0.6); }
+        [data-theme='dark'] .theme-popover .item:hover { background: #2c2c2e; }
+
+        /* 确保暗色下弹窗仍保留圆角（防止覆盖丢失） */
+        [data-theme='dark'] .modal-content { border-radius: 16px; }
+
+        /* 暗色下的状态色微调（Apple 风格） */
+        [data-theme='dark'] .card.completed { background: #30d158; }
+        [data-theme='dark'] .card.in-progress { background: #ff9f0a; }
+        [data-theme='dark'] .card.not-started { background: #ff453a; }
+
+    
+        /* Apple-quality: mobile gear toggle, edit-mode expansion, pages stat mini bar */
+        .card-gear {
+            position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%;
+            background: rgba(0,0,0,0.28); color: #fff; border: none; cursor: pointer;
+            display: none; align-items: center; justify-content: center; font-size: 14px; line-height: 1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            backdrop-filter: saturate(180%) blur(16px); -webkit-backdrop-filter: saturate(180%) blur(16px);
+        }
+        .card-gear:hover { background: rgba(0,0,0,0.36); }
+        .card-gear:active { transform: scale(0.94); opacity: 0.9; }
+        .edit-mode .card-gear { right: 36px; }
+        @media (hover: none) and (pointer: coarse) { .card-gear { display: flex; } }
+        .card.show-controls .hover-controls { opacity: 1; max-height: 200px; pointer-events: auto; }
+        .subject-section.edit-mode .hover-controls { opacity: 1; max-height: 200px; pointer-events: auto; }
+        #pagesStat .stat-progress { width: 100%; height: 4px; background: #e5e5e7; border-radius: 2px; overflow: hidden; margin-top: 6px; }
+        #pagesStat .stat-progress .bar { height: 100%; background: #007aff; width: 0%; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+        [data-theme='dark'] #pagesStat .stat-progress { background: #2c2c2e; }
+        [data-theme='dark'] #pagesStat .stat-progress .bar { background: #0a84ff; }
+        .card-delete, .card-gear { z-index: 2; }
+
+    
+        /* 帮助弹窗：悬浮“我知道了”按钮（Apple 风格） */
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            z-index: 3500;
+            padding: 12px 18px;
+            border-radius: 20px;
+            border: none;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            color: #007aff;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            display: none; /* 仅在帮助弹窗开启时显示 */
+        }
+
+            /* Apple-style Header Toolbar */
+        .header-buttons { gap: 12px; display: flex; align-items: center; }
+        .toolbar { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 12px; background: rgba(255,255,255,0.72); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .toolbar .divider { width: 1px; height: 24px; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.18), transparent); margin: 0 2px; }
+        .toolbar-btn { appearance: none; -webkit-appearance: none; border: 0; cursor: pointer; background: transparent; color: #1d1d1f; border-radius: 8px; font-size: 0.9em; font-weight: 600; letter-spacing: -0.01em; padding: 6px 12px; min-height: 32px; transition: background 0.2s, transform 0.2s; }
+        .toolbar-btn:hover { background: rgba(0,0,0,0.06); }
+        .toolbar-btn:active { transform: scale(0.98); }
+        .toolbar-btn.primary { background: #007aff; color: #fff; }
+        .toolbar-btn.primary:hover { background: #0060df; }
+        [data-theme=dark] .toolbar { background: rgba(28,28,30,0.72); border-color: rgba(255,255,255,0.08); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        [data-theme=dark] .toolbar .divider { background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.24), transparent); }
+        [data-theme=dark] .toolbar-btn { color: #f5f5f7; }
+        [data-theme=dark] .toolbar-btn:hover { background: rgba(255,255,255,0.08); }
+        [data-theme=dark] .toolbar-btn.primary { background: #0a84ff; }
+        [data-theme=dark] .toolbar-btn.primary:hover { background: #0060df; }
+        .toolbar-btn:disabled, .toolbar-btn[aria-disabled="true"] { opacity: 0.5; cursor: default; transform: none; }
+        .toolbar-btn:disabled:hover, .toolbar-btn[aria-disabled="true"]:hover { background: transparent; }
+
+        .toolbar-btn:focus-visible, .tool-btn:focus-visible { outline: 2px solid #0a84ff; outline-offset: 2px; }
+
+
+        /* Toolbar responsive */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .header-buttons { width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
+            .toolbar { width: auto; flex-wrap: wrap; }
+            .toolbar .divider { display: none; }
+        }
+
+    
+        /* Toolbar button variants */
+        .toolbar-btn.outline { border: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.6); color: #007aff; }
+        .toolbar-btn.outline:hover { background: rgba(0,0,0,0.06); }
+        [data-theme='dark'] .toolbar-btn.outline { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.08); color: #0a84ff; }
+        [data-theme='dark'] .toolbar-btn.outline:hover { background: rgba(255,255,255,0.12); }
+
+        /* Large Title → Compact on scroll */
+        .header { transition: padding 0.25s ease, background 0.25s ease; }
+        .header h1 { transition: font-size 0.25s ease, letter-spacing 0.25s ease; }
+        .header.compact h1 { font-size: 1.6em; letter-spacing: -0.01em; }
+
+        /* Help modal scroll area uses inner scroll to preserve rounded corners */
+        #helpModal .modal-content { overflow: hidden; display: flex; flex-direction: column; }
+        #helpModal .help-content { max-height: 60vh; overflow: auto; padding-right: 6px; }
+        #helpModal .help-content::-webkit-scrollbar { width: 8px; }
+        #helpModal .help-content::-webkit-scrollbar-track { background: transparent; }
+        #helpModal .help-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 8px; }
+        [data-theme='dark'] #helpModal .help-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
+        #helpModal .help-content { scrollbar-color: rgba(0,0,0,0.2) transparent; scrollbar-width: thin; }
+
+
+        @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+
+        @media (max-width: 768px) { .tool-btn { height: 44px; min-width: 44px; } .tool-text-btn { min-width: 44px; padding: 0 12px; } }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title-row">
+                <button class="tool-btn theme-toggle" id="themeToggleMobile" aria-label="切换主题" title="切换主题">🌙</button>
+                <h1>国庆作业完成进度</h1>
+            </div>
+            <div class="header-buttons">
+                <div class="toolbar">
+                    <button class="toolbar-btn" onclick="importConfig()" aria-label="导入配置">导入</button>
+                    <button class="toolbar-btn" onclick="exportConfig()" aria-label="导出配置">导出</button>
+                    <button class="toolbar-btn" id="saveImageBtn" onclick="saveAsImage()" aria-label="保存图片">保存</button>
+                    <span class="divider"></span>
+                    <button class="toolbar-btn outline" id="editBtn" onclick="toggleEdit()">编辑</button>
+                </div>
+                <div class="toolbar">
+                    <button class="toolbar-btn" id="helpBtn" onclick="openModal('helpModal')" aria-label="使用说明" title="使用说明">使用说明</button>
+                    <span class="divider"></span>
+                    <button class="toolbar-btn theme-toggle" id="themeToggle" aria-label="切换主题" title="切换主题">切换主题</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="subjectsContainer"></div>
+
+        <div class="footer">
+            <span>Designed & Built by WitMarx</span>
+            <span class="footer-divider">•</span>
+            <span>© <span id="currentYear"></span></span>
+        </div>
+
+        <!-- 动态预留底部空间（用于进度悬浮窗展开时避免遮挡） -->
+        <div id="progressSpacer" aria-hidden="true"></div>
+
+        <div class="progress-section">
+            <div class="progress-header" onclick="toggleProgress()">
+                <div class="progress-title">总体完成进度</div>
+                <div class="toggle-icon" id="toggleIcon">▼</div>
+            </div>
+            <div class="progress-content" id="progressContent">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-text" id="progressText">0%</div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="completedCount">0</div>
+                        <div class="stat-label">已完成</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="inProgressCount">0</div>
+                        <div class="stat-label">进行中</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="notStartedCount">0</div>
+                        <div class="stat-label">未完成</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalCount">0</div>
+                        <div class="stat-label">总计</div>
+                    </div>
+                    <div class="stat-item" id="pagesStat">
+                        <div class="stat-number" id="pagesPercent">0%</div>
+                        <div class="stat-progress"><div class="bar" id="pagesBar"></div></div>
+                        <div class="stat-label" id="pagesLabel">页数 0/0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 使用说明弹窗 -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-title">使用说明</div>
+            <div class="help-content">
+                <h3>🧭 快速上手</h3>
+                <ul>
+                    <li>点卡片切换状态：未完成 → 进行中 → 已完成</li>
+                    <li>进行中任务可用滑块或百分比输入（触屏点齿轮展开控件）</li>
+                    <li>可录入“已页/总页”，自动按页数计算完成度；仅填“总页”也可参与汇总</li>
+                </ul>
+                <h3>✏️ 编辑与排序</h3>
+                <ul>
+                    <li>点右上“编辑”进入编辑模式：可增删学科/作业，支持拖拽排序</li>
+                    <li>编辑模式下控件默认展开，便于批量录入页数</li>
+                </ul>
+                <h3>📊 汇总与统计</h3>
+                <ul>
+                    <li>底部显示总体完成度；展开可查看任务统计与“页数”汇总</li>
+                    <li>“页数”卡片带细进度条，展示已完成页/总页</li>
+                </ul>
+                <h3>💾 配置与分享</h3>
+                <ul>
+                    <li>导出/导入配置：备份或在设备间同步进度</li>
+                    <li>右上“保存图片”将页面保存为 PNG，便于分享/打印</li>
+                </ul>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" onclick="closeModal('helpModal')">我知道了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加学科弹窗 -->
+    <div class="modal" id="addSubjectModal">
+        <div class="modal-content">
+            <div class="modal-title">添加学科</div>
+            <div class="form-group">
+                <label class="form-label">学科名称</label>
+                <input type="text" class="form-input" id="subjectTitle">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('addSubjectModal')">取消</button>
+                <button class="btn" onclick="confirmAddSubject()">确定</button>
+            </div>
+        </div>
+    
+
+    <div class="theme-popover" id="themePopover" role="menu" aria-hidden="true">
+        <div class="item" data-mode="auto"><span>跟随系统</span><span class="check">✓</span></div>
+        <div class="item" data-mode="light"><span>浅色</span><span class="check">✓</span></div>
+        <div class="item" data-mode="dark"><span>深色</span><span class="check">✓</span></div>
+    </div>
+</div>
+
+    <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileImport(event)">
+
+    <script src="default-config.js"></script>
+    <script>
+        let editMode = false;
+        let currentSubjectIndex = -1;
+        function cloneSubjectsConfig(config) {
+            if (!Array.isArray(config)) return [];
+            return config.map(subject => ({
+                name: subject?.name || '未命名学科',
+                homeworks: Array.isArray(subject?.homeworks)
+                    ? subject.homeworks.map(hw => ({
+                        title: hw?.title || '未命名作业',
+                        status: hw?.status || 'not-started',
+                        pagesDone: hw?.pagesDone,
+                        pagesTotal: hw?.pagesTotal
+                    }))
+                    : []
+            }));
+        }
+
+        const STORAGE_KEY = 'homeworkSubjectsConfig';
+
+        function loadInitialSubjects() {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    const stored = window.localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (Array.isArray(parsed)) {
+                            return cloneSubjectsConfig(parsed);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('读取本地配置失败：', error);
+                }
+            }
+            return cloneSubjectsConfig(window.defaultSubjects);
+        }
+
+        function persistSubjects() {
+            if (typeof window === 'undefined' || !window.localStorage) return;
+            try {
+                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(subjects));
+            } catch (error) {
+                console.warn('保存本地配置失败：', error);
+            }
+        }
+
+        function resetSubjectsToDefault() {
+            subjects = cloneSubjectsConfig(window.defaultSubjects);
+            renderSubjects();
+        }
+
+        window.resetSubjectsToDefault = resetSubjectsToDefault;
+
+        let subjects = loadInitialSubjects();
+
+        function renderSubjects() {
+            const container = document.getElementById('subjectsContainer');
+            container.innerHTML = '';
+
+            subjects.forEach((subject, subjectIndex) => {
+                const section = document.createElement('div');
+                section.className = 'subject-section' + (editMode ? ' edit-mode draggable-subject' : '');
+                section.draggable = editMode;
+                section.dataset.subjectIndex = subjectIndex;
+
+                const subjectPercent = getSubjectProgressPercent(subject);
+                section.innerHTML = `
+                    <div class="subject-header">
+                        <h2 class="subject-title">${subject.name}</h2>
+                        <div class="subject-actions">
+                            <button class="icon-btn" onclick="addHomework(${subjectIndex})">+ 作业</button>
+                            <button class="icon-btn delete" onclick="deleteSubject(${subjectIndex})">删除学科</button>
+                        </div>
+                    </div>
+                    <div class="subject-progress">
+                      <div class="progress-bar-container">
+                        <div class="progress-bar subject-progress-bar ${subjectPercent === 100 ? 'complete' : ''}" data-subject-index="${subjectIndex}" style="width:${subjectPercent}%"></div>
+                      </div>
+                      <div class="subject-progress-text" data-subject-index="${subjectIndex}">${subjectPercent}%</div>
+                    </div>
+                    <div class="cards-grid" data-subject-index="${subjectIndex}">
+                        ${subject.homeworks.map((hw, hwIndex) => `
+                            <div class="card ${hw.status} ${editMode ? 'draggable' : ''}"
+                                 draggable="${editMode}"
+                                 data-subject-index="${subjectIndex}"
+                                 data-hw-index="${hwIndex}"
+                                 onclick="toggleStatus(${subjectIndex}, ${hwIndex})">
+                                <button class="card-delete" onclick="event.stopPropagation(); deleteHomework(${subjectIndex}, ${hwIndex})">×</button>
+                                <button class="card-gear" onclick="event.stopPropagation(); toggleCardControls(this)" aria-label="展开控件" title="展开控件">⚙️</button>
+                                <div class="card-title">${hw.title}</div>
+                                                                <div class="card-status">${getStatusText(hw)}</div>
+                                <div class="hover-controls" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+                                  <div class="pages-controls" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+                                    <input type="number" class="mini-input page-input" min="0" placeholder="已页"
+                                           value="${(hw.pagesDone != null ? hw.pagesDone : "")}"
+                                           oninput="updateHwPages(${subjectIndex}, ${hwIndex}, 'done', this.value)">
+                                    <span class="slash">/</span>
+                                    <input type="number" class="mini-input page-input" min="0" placeholder="总页"
+                                           value="${(hw.pagesTotal != null ? hw.pagesTotal : "")}"
+                                           oninput="updateHwPages(${subjectIndex}, ${hwIndex}, 'total', this.value)">
+                                  </div>
+                                </div>
+
+                            </div>
+                        `).join('')}
+                        <div class="card add-card" onclick="addHomework(${subjectIndex})">
+                            + 添加作业
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(section);
+            });
+
+            if (editMode) {
+                const addSection = document.createElement('div');
+                addSection.className = 'subject-section';
+                addSection.innerHTML = `
+                    <button class="btn" style="width: 100%;" onclick="openAddSubjectModal()">+ 添加学科</button>
+                `;
+                container.appendChild(addSection);
+            }
+
+            updateProgress();
+            setupDragAndDrop();
+            setupSubjectDragAndDrop();
+            persistSubjects();
+        }
+
+                // 进度计算：最近一次编辑优先（pages 或 manual），缺省时按状态兜底
+        function clampPercent(n) { return Math.max(0, Math.min(100, Math.round(Number(n) || 0))); }
+
+        function getHomeworkProgress(hw) {
+            if (!hw || !hw.status) return 0;
+            if (hw.status === "completed") return 100;
+            const pd = Number(hw.pagesDone), pt = Number(hw.pagesTotal);
+            const pagesReady = Number.isFinite(pd) && Number.isFinite(pt) && pt > 0;
+            if (pagesReady) return clampPercent(pd / pt * 100);
+            return 0;
+        }
+
+        function getSubjectProgressPercent(subject) {
+            if (!subject || !Array.isArray(subject.homeworks) || subject.homeworks.length === 0) return 0;
+            let pagesDoneSum = 0;
+            let pagesTotalSum = 0;
+            subject.homeworks.forEach(hw => {
+                const pt = Number(hw.pagesTotal);
+                if (Number.isFinite(pt) && pt > 0) {
+                    let pd = Number(hw.pagesDone);
+                    if (!Number.isFinite(pd)) pd = (hw.status === "completed") ? pt : 0;
+                    pagesDoneSum += Math.min(pd, pt);
+                    pagesTotalSum += pt;
+                }
+            });
+            return pagesTotalSum > 0 ? Math.round((pagesDoneSum / pagesTotalSum) * 100) : 0;
+        }
+
+        function getStatusText(hw) {
+            if (!hw) return "未完成";
+            if (hw.status === "completed") return "已完成";
+            if (hw.status === "not-started") return "未完成";
+            return "进行中 " + getHomeworkProgress(hw) + "%";
+        }
+        function syncStatusWithPages(hw) {
+            const pt = Number(hw.pagesTotal);
+            const pd = Number(hw.pagesDone);
+            const hasPT = Number.isFinite(pt) && pt > 0;
+            if (!hasPT) return;
+            if (!Number.isFinite(pd) || pd <= 0) hw.status = 'not-started';
+            else if (pd >= pt) hw.status = 'completed';
+            else hw.status = 'in-progress';
+        }
+
+        function updateHwPages(subjectIndex, hwIndex, which, value) {
+            const hw = subjects[subjectIndex].homeworks[hwIndex];
+            const card = document.querySelector(`.card[data-subject-index="${subjectIndex}"][data-hw-index="${hwIndex}"]`);
+            if (value === '' || value == null) {
+                if (which === 'done') delete hw.pagesDone;
+                if (which === 'total') delete hw.pagesTotal;
+                syncStatusWithPages(hw);
+                if (card) {
+                    const sel = which === 'done' ? '.pages-controls input[placeholder="已页"]' : '.pages-controls input[placeholder="总页"]';
+                    const inp = card.querySelector(sel);
+                    if (inp) inp.value = '';
+                    const p = getHomeworkProgress(hw);
+                    const statusEl = card.querySelector('.card-status');
+                    if (statusEl) statusEl.textContent = getStatusText(hw);
+                    card.classList.remove('not-started','in-progress','completed');
+                    card.classList.add(hw.status);
+                }
+                updateProgress();
+                return;
+            }
+            const v = Math.max(0, Math.floor(Number(value) || 0));
+            if (which === "done") hw.pagesDone = v;
+            if (which === "total") hw.pagesTotal = v;
+            syncStatusWithPages(hw);
+            if (card) {
+                const doneInput = card.querySelector('.pages-controls input[placeholder="已页"]');
+                const totalInput = card.querySelector('.pages-controls input[placeholder="总页"]');
+                if (doneInput && which === "done") doneInput.value = String(v);
+                if (totalInput && which === "total") totalInput.value = String(v);
+                const statusEl = card.querySelector('.card-status');
+                    const p = getHomeworkProgress(hw);
+                if (statusEl) statusEl.textContent = getStatusText(hw);
+                card.classList.remove('not-started','in-progress','completed');
+                card.classList.add(hw.status);
+            }
+            updateProgress();
+        }
+
+        function toggleCardControls(btn) {
+            const card = btn.closest('.card');
+            if (!card) return;
+            card.classList.toggle('show-controls');
+        }
+
+        function toggleEdit() {
+            editMode = !editMode;
+            const btn = document.getElementById('editBtn');
+            btn.textContent = editMode ? '完成' : '编辑';
+            if (btn) { btn.classList.remove('primary','outline'); btn.classList.add(editMode ? 'primary' : 'outline'); }
+            renderSubjects();
+        }
+
+        function toggleStatus(subjectIndex, hwIndex) {
+            if (editMode) return;
+
+            const homework = subjects[subjectIndex].homeworks[hwIndex];
+            const statusCycle = ['not-started', 'in-progress', 'completed'];
+            const currentIndex = statusCycle.indexOf(homework.status);
+            homework.status = statusCycle[(currentIndex + 1) % statusCycle.length];
+
+            const pt = Number(homework.pagesTotal);
+            if (Number.isFinite(pt) && pt > 0) {
+                if (homework.status === 'completed') homework.pagesDone = pt;
+                else if (homework.status === 'not-started') homework.pagesDone = 0;
+            }
+
+            renderSubjects();
+        }
+
+        function addHomework(subjectIndex) {
+            currentSubjectIndex = subjectIndex;
+            openModal('addHomeworkModal');
+        }
+
+        function confirmAddHomework() {
+            const title = document.getElementById('homeworkTitle').value.trim();
+            const status = document.getElementById('homeworkStatus').value;
+
+            if (!title) {
+                alert('请输入作业名称');
+                return;
+            }
+
+            subjects[currentSubjectIndex].homeworks.push({ title, status });
+            document.getElementById('homeworkTitle').value = '';
+            closeModal('addHomeworkModal');
+            renderSubjects();
+        }
+
+        function deleteHomework(subjectIndex, hwIndex) {
+            if (confirm('确定要删除这项作业吗？')) {
+                subjects[subjectIndex].homeworks.splice(hwIndex, 1);
+                renderSubjects();
+            }
+        }
+
+        function openAddSubjectModal() {
+            openModal('addSubjectModal');
+        }
+
+        function confirmAddSubject() {
+            const name = document.getElementById('subjectTitle').value.trim();
+
+            if (!name) {
+                alert('请输入学科名称');
+                return;
+            }
+
+            subjects.push({ name, homeworks: [] });
+            document.getElementById('subjectTitle').value = '';
+            closeModal('addSubjectModal');
+            renderSubjects();
+        }
+
+        function deleteSubject(subjectIndex) {
+            if (confirm('确定要删除整个学科吗？')) {
+                subjects.splice(subjectIndex, 1);
+                renderSubjects();
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function exportConfig() {
+            const config = {
+                version: "1.1",
+                exportDate: new Date().toISOString(),
+                subjects: subjects
+            };
+
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `国庆作业配置_${new Date().toLocaleDateString()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importConfig() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const config = JSON.parse(e.target.result);
+                    if (config.subjects && Array.isArray(config.subjects)) {
+                        if (confirm('导入配置将替换当前所有数据，是否继续？')) {
+                            subjects = cloneSubjectsConfig(config.subjects);
+                            renderSubjects();
+                        }
+                    } else {
+                        alert('配置文件格式不正确');
+                    }
+                } catch (error) {
+                    alert('读取配置文件失败：' + error.message);
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function updateProgress() {
+            let totalTasks = 0;
+            let completed = 0;
+            let inProgress = 0;
+            let notStarted = 0;
+            let sumProgress = 0;
+            let pagesDoneSum = 0;
+            let pagesTotalSum = 0;
+
+            subjects.forEach(subject => {
+                subject.homeworks.forEach(hw => {
+                    totalTasks++;
+                    if (hw.status === "completed") completed++;
+                    else if (hw.status === "in-progress") inProgress++;
+                    else if (hw.status === "not-started") notStarted++;
+
+                    const p = getHomeworkProgress(hw);
+                    sumProgress += p;
+
+                    const pt = Number(hw.pagesTotal);
+                    if (Number.isFinite(pt) && pt > 0) {
+                        let pd = Number(hw.pagesDone);
+                        if (!Number.isFinite(pd)) pd = (hw.status === "completed") ? pt : 0;
+                        pagesDoneSum += Math.min(pd, pt);
+                        pagesTotalSum += pt;
+                    }
+                });
+            });
+
+            const overall = totalTasks > 0 ? Math.round(sumProgress / totalTasks) : 0;
+            const overallBar = document.getElementById('progressBar');
+            if (overallBar) {
+                overallBar.style.width = overall + "%";
+                overallBar.classList.toggle('complete', overall === 100);
+            }
+            document.getElementById('progressText').textContent = overall + "%";
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('inProgressCount').textContent = inProgress;
+            document.getElementById('notStartedCount').textContent = notStarted;
+            document.getElementById('totalCount').textContent = totalTasks;
+
+            const pagesPct = pagesTotalSum > 0 ? Math.round((pagesDoneSum / pagesTotalSum) * 100) : 0;
+            const pPctEl = document.getElementById('pagesPercent');
+            const pLblEl = document.getElementById('pagesLabel');
+            if (pPctEl) pPctEl.textContent = pagesPct + "%";
+            if (pLblEl) pLblEl.textContent = `页数 ${pagesDoneSum}/${pagesTotalSum}`;
+            const pBarEl = document.getElementById('pagesBar');
+            if (pBarEl) pBarEl.style.width = pagesPct + "%";
+            if (typeof updateSubjectProgressBars === 'function') updateSubjectProgressBars();
+            // 根据进度面板状态更新底部保留空间
+            if (typeof updateProgressSpacer === 'function') updateProgressSpacer();
+        }
+
+        function updateSubjectProgressBars() {
+            subjects.forEach((subject, idx) => {
+                const pct = getSubjectProgressPercent(subject);
+                const bar = document.querySelector(`.subject-progress-bar[data-subject-index="${idx}"]`);
+                const lbl = document.querySelector(`.subject-progress-text[data-subject-index="${idx}"]`);
+                if (bar) { bar.style.width = pct + '%'; bar.classList.toggle('complete', pct === 100); }
+                if (lbl) lbl.textContent = pct + '%';
+            });
+        }
+
+        function toggleProgress() {
+            const content = document.getElementById('progressContent');
+            const icon = document.getElementById('toggleIcon');
+            content.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+            if (typeof updateProgressSpacer === 'function') updateProgressSpacer();
+        }
+
+        // 与进度悬浮窗联动的底部空隙管理，避免收起时画面抖动
+        function updateProgressSpacer() {
+            const spacer = document.getElementById('progressSpacer');
+            const section = document.querySelector('.progress-section');
+            const content = document.getElementById('progressContent');
+            const header = section ? section.querySelector('.progress-header') : null;
+            if (!spacer || !section || !content || !header) return;
+            const collapsed = content.classList.contains('collapsed');
+            // 展开时预留“标题+内容”的高度；收起时为 0
+            const headerH = header.offsetHeight || 0;
+            const contentH = collapsed ? 0 : content.scrollHeight;
+            const target = collapsed ? 0 : (headerH + contentH);
+            spacer.style.height = target + 'px';
+        }
+
+        function setupDragAndDrop() {
+            if (!editMode) return;
+
+            const draggableCards = document.querySelectorAll('.card.draggable');
+
+            draggableCards.forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+                card.addEventListener('dragover', handleDragOver);
+                card.addEventListener('drop', handleDrop);
+                card.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+
+        let draggedElement = null;
+        let draggedSubjectIndex = null;
+        let draggedHwIndex = null;
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            draggedSubjectIndex = parseInt(this.dataset.subjectIndex);
+            draggedHwIndex = parseInt(this.dataset.hwIndex);
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+
+            const targetCard = e.target.closest('.card.draggable');
+            if (targetCard && targetCard !== draggedElement) {
+                targetCard.classList.add('drag-over');
+            }
+
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            const targetCard = e.target.closest('.card.draggable');
+            if (targetCard) {
+                targetCard.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            const targetCard = e.target.closest('.card.draggable');
+            if (!targetCard || targetCard === draggedElement) {
+                return false;
+            }
+
+            const targetSubjectIndex = parseInt(targetCard.dataset.subjectIndex);
+            const targetHwIndex = parseInt(targetCard.dataset.hwIndex);
+
+            if (draggedSubjectIndex === targetSubjectIndex) {
+                const subject = subjects[draggedSubjectIndex];
+                const draggedHomework = subject.homeworks[draggedHwIndex];
+
+                subject.homeworks.splice(draggedHwIndex, 1);
+                subject.homeworks.splice(targetHwIndex, 0, draggedHomework);
+
+                renderSubjects();
+            }
+
+            return false;
+        }
+
+        async function saveAsImage() {
+            const button = document.getElementById('saveImageBtn');
+            let originalText = '';
+            if (button) {
+                button.disabled = true;
+                originalText = button.textContent;
+                button.textContent = '处理中...';
+            }
+            try {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                document.head.appendChild(script);
+                await new Promise((resolve, reject) => { script.onload = resolve; script.onerror = reject; });
+
+                const progressSection = document.querySelector('.progress-section');
+                const helpBtn = document.getElementById('helpBtn');
+                const saveBtn = document.getElementById('saveImageBtn');
+
+                const prevPos = progressSection && progressSection.style.position;
+                const prevBottom = progressSection && progressSection.style.bottom;
+                if (progressSection) { progressSection.style.position = 'relative'; progressSection.style.bottom = 'auto'; }
+                if (helpBtn) helpBtn.style.display = 'none';
+                if (saveBtn) saveBtn.style.display = 'none';
+
+                const bg = getComputedStyle(document.body).backgroundColor;
+                const canvas = await html2canvas(document.body, { backgroundColor: bg, scale: 2, logging: false, useCORS: true });
+
+                if (progressSection) { progressSection.style.position = prevPos || 'fixed'; progressSection.style.bottom = prevBottom || '0'; }
+                if (helpBtn) helpBtn.style.display = ''; 
+                if (saveBtn) saveBtn.style.display = '';
+
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `国庆作业进度_${new Date().toLocaleDateString()}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    if (button) { button.disabled = false; button.textContent = originalText || '保存图片'; }
+                });
+            } catch (error) {
+                alert('保存图片失败：' + error.message);
+                if (button) { button.disabled = false; button.textContent = originalText || '保存图片'; }
+            }
+        }
+
+        function setupSubjectDragAndDrop() {
+            if (!editMode) return;
+
+            const draggableSections = document.querySelectorAll('.subject-section.draggable-subject');
+
+            draggableSections.forEach(section => {
+                section.addEventListener('dragstart', handleSubjectDragStart);
+                section.addEventListener('dragend', handleSubjectDragEnd);
+                section.addEventListener('dragover', handleSubjectDragOver);
+                section.addEventListener('drop', handleSubjectDrop);
+                section.addEventListener('dragleave', handleSubjectDragLeave);
+            });
+        }
+
+        let draggedSubject = null;
+        let draggedSubjectIdx = null;
+
+        function handleSubjectDragStart(e) {
+            if (e.target.classList.contains('card')) return;
+
+            draggedSubject = this;
+            draggedSubjectIdx = parseInt(this.dataset.subjectIndex);
+            this.classList.add('dragging-subject');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleSubjectDragEnd(e) {
+            this.classList.remove('dragging-subject');
+            document.querySelectorAll('.subject-section').forEach(section => {
+                section.classList.remove('drag-over-subject');
+            });
+        }
+
+        function handleSubjectDragOver(e) {
+            if (!draggedSubject || e.target.closest('.card')) return;
+
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+
+            const targetSection = e.target.closest('.subject-section.draggable-subject');
+            if (targetSection && targetSection !== draggedSubject) {
+                targetSection.classList.add('drag-over-subject');
+            }
+
+            return false;
+        }
+
+        function handleSubjectDragLeave(e) {
+            const targetSection = e.target.closest('.subject-section.draggable-subject');
+            if (targetSection && !targetSection.contains(e.relatedTarget)) {
+                targetSection.classList.remove('drag-over-subject');
+            }
+        }
+
+        function handleSubjectDrop(e) {
+            if (!draggedSubject || e.target.closest('.card')) return;
+
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            const targetSection = e.target.closest('.subject-section.draggable-subject');
+            if (!targetSection || targetSection === draggedSubject) {
+                return false;
+            }
+
+            const targetIdx = parseInt(targetSection.dataset.subjectIndex);
+
+            const draggedSubjectData = subjects[draggedSubjectIdx];
+            subjects.splice(draggedSubjectIdx, 1);
+            subjects.splice(targetIdx, 0, draggedSubjectData);
+
+            renderSubjects();
+
+            return false;
+        }
+
+        renderSubjects();
+
+        // 主题切换（三段：跟随系统/浅色/深色），带弹出菜单与持久化
+        (function () {
+            const toggles = Array.from(document.querySelectorAll('.theme-toggle'));
+            const popover = document.getElementById('themePopover');
+            const media = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+
+            const sun = () => '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor"/><g fill="currentColor"><rect x="11" y="2" width="2" height="3"/><rect x="11" y="19" width="2" height="3"/><rect x="2" y="11" width="3" height="2"/><rect x="19" y="11" width="3" height="2"/><rect x="4.2" y="4.2" width="2" height="2" transform="rotate(-45 5.2 5.2)"/><rect x="17.8" y="17.8" width="2" height="2" transform="rotate(-45 18.8 18.8)"/><rect x="4.2" y="17.8" width="2" height="2" transform="rotate(45 5.2 18.8)"/><rect x="17.8" y="4.2" width="2" height="2" transform="rotate(45 18.8 5.2)"/></g></svg>';
+            const moon = () => '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="currentColor"/></svg>';
+
+            function getSavedMode() {
+                try { return localStorage.getItem('themeMode') || 'auto'; } catch(e) { return 'auto'; }
+            }
+            function setSavedMode(mode) {
+                try { localStorage.setItem('themeMode', mode); } catch(e) {}
+            }
+            function resolvedTheme(mode) {
+                if (mode === 'light') return 'light';
+                if (mode === 'dark') return 'dark';
+                return (media && media.matches) ? 'dark' : 'light';
+            }
+            function apply(mode) {
+                const t = resolvedTheme(mode);
+                document.documentElement.setAttribute('data-theme', t);
+                setSavedMode(mode);
+                // 更新按钮图标与提示
+                toggles.forEach(btn => {
+                    if (btn.id === 'themeToggleMobile') { btn.innerHTML = (t === 'dark') ? moon() : sun(); } else { btn.textContent = '切换主题'; }
+                    const label = mode === 'auto' ? '跟随系统' : (mode === 'dark' ? '深色' : '浅色');
+                    btn.setAttribute('aria-label', '切换主题（' + label + '）');
+                    btn.setAttribute('title', '切换主题');
+                });
+                // 更新弹窗选中项
+                if (popover) {
+                    popover.querySelectorAll('.item').forEach(it => {
+                        it.classList.toggle('active', it.getAttribute('data-mode') === mode);
+                    });
+                }
+            }
+            function openPopoverNear(btn) {
+                if (!popover || !btn) return;
+                const r = btn.getBoundingClientRect();
+                const gap = 8;
+                const top = r.bottom + gap;
+                let left = r.right - 180; // right aligned to button
+                left = Math.max(12, Math.min(left, window.innerWidth - 192));
+                popover.style.top = Math.round(top) + 'px';
+                popover.style.left = Math.round(left) + 'px';
+                popover.classList.add('active');
+                popover.setAttribute('aria-hidden', 'false');
+            }
+            function closePopover() {
+                if (!popover) return;
+                popover.classList.remove('active');
+                popover.setAttribute('aria-hidden', 'true');
+            }
+
+            // Init
+            let mode = getSavedMode();
+            apply(mode);
+
+            // Toggle click：单击直接切换（light ↔ dark），Alt/右键打开菜单选择（含跟随系统）
+            toggles.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (e.altKey) {
+                        // Alt+Click 显示/隐藏菜单
+                        if (popover && popover.classList.contains('active')) closePopover();
+                        else openPopoverNear(btn);
+                        return;
+                    }
+                    // 直接在浅/深之间切换；若当前为 auto，则切到与当前解析相反的那个，给用户明确反馈
+                    const modeNow = getSavedMode();
+                    let next;
+                    if (modeNow === 'auto') {
+                        next = resolvedTheme('auto') === 'dark' ? 'light' : 'dark';
+                    } else if (modeNow === 'light') {
+                        next = 'dark';
+                    } else {
+                        next = 'light';
+                    }
+                    apply(next);
+                    closePopover();
+                });
+
+                // 右键打开菜单
+                btn.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (popover && popover.classList.contains('active')) closePopover();
+                    else openPopoverNear(btn);
+                });
+            });
+
+            // Popover interactions
+            if (popover) {
+                popover.addEventListener('click', (e) => {
+                    const item = e.target.closest('.item');
+                    if (!item) return;
+                    mode = item.getAttribute('data-mode');
+                    apply(mode);
+                    closePopover();
+                });
+            }
+
+            // Outside click / Esc to close
+            document.addEventListener('click', (e) => {
+                if (!popover) return;
+                if (!popover.contains(e.target) && !toggles.some(b => b.contains(e.target))) {
+                    closePopover();
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closePopover();
+            });
+
+            // Follow system when mode is auto
+            if (media && media.addEventListener) {
+                media.addEventListener('change', () => { if (getSavedMode()==='auto') apply('auto'); });
+            } else if (media && media.addListener) {
+                media.addListener(() => { if (getSavedMode()==='auto') apply('auto'); });
+            }
+        })();
+
+// Large Title → Compact on scroll
+        function applyCompactHeader() {
+            const header = document.querySelector('.header');
+            if (!header) return;
+            if (window.scrollY > 6) header.classList.add('compact');
+            else header.classList.remove('compact');
+        }
+        window.addEventListener('scroll', applyCompactHeader, { passive: true });
+        applyCompactHeader();
+        // 初始化与窗口变化时同步底部空隙
+        window.addEventListener('resize', () => { if (typeof updateProgressSpacer==='function') updateProgressSpacer(); }, { passive: true });
+        if (typeof updateProgressSpacer==='function') updateProgressSpacer();
+
+        // 设置当前年份
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顶部栏设计方案</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        body {
+            margin: 0;
+            padding: 48px 24px 80px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .page {
+            width: min(1040px, 100%);
+            display: grid;
+            gap: 32px;
+        }
+
+        .intro {
+            display: grid;
+            gap: 12px;
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .notes {
+            font-size: 0.95rem;
+            color: #6e6e73;
+            max-width: 720px;
+            line-height: 1.6;
+        }
+
+        .demo-grid {
+            display: grid;
+            gap: 32px;
+        }
+
+        .demo-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.08);
+            display: grid;
+            gap: 20px;
+        }
+
+        .demo-card h2 {
+            font-size: 1.4rem;
+            letter-spacing: -0.01em;
+            color: #1d1d1f;
+            margin: 0;
+        }
+
+        .demo-card p {
+            margin: 0;
+            color: #6e6e73;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .demo-stage {
+            background: linear-gradient(180deg, rgba(235, 238, 245, 0.8) 0%, rgba(220, 224, 235, 0.2) 100%);
+            border-radius: 32px;
+            padding: 40px 24px;
+            display: grid;
+            justify-items: center;
+        }
+
+        .demo-stage .app-frame {
+            width: min(780px, 100%);
+            border-radius: 30px;
+            padding: 48px 36px;
+            background: rgba(255, 255, 255, 0.86);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-stage .app-body {
+            margin-top: 120px;
+            height: 420px;
+            border-radius: 24px;
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        /* 方案 1：Aurora Glass */
+        .header-glass {
+            position: sticky;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 32px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(28px) saturate(160%);
+            -webkit-backdrop-filter: blur(28px) saturate(160%);
+            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16);
+        }
+
+        .header-glass.compact {
+            padding: 16px 26px;
+            border-color: rgba(60, 60, 67, 0.16);
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.2);
+        }
+
+        /* 方案 2：Gradient Capsule */
+        .header-gradient {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 40px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(236, 242, 255, 0.7));
+            border: 1px solid rgba(128, 146, 255, 0.2);
+            box-shadow: 0 18px 44px rgba(53, 65, 104, 0.16);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-gradient::after {
+            content: "";
+            position: absolute;
+            inset: 1px;
+            border-radius: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+        }
+
+        .header-gradient.compact {
+            padding: 16px 30px;
+            box-shadow: 0 24px 60px rgba(53, 65, 104, 0.2);
+        }
+
+        /* 方案 3：Magnetic Tile */
+        .header-magnetic {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 28px;
+            border-radius: 18px;
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: inset 0 1px rgba(255, 255, 255, 0.7);
+            position: relative;
+        }
+
+        .header-magnetic::after {
+            content: "";
+            position: absolute;
+            left: 20%;
+            right: 20%;
+            bottom: -12px;
+            height: 24px;
+            background: radial-gradient(circle at 50% 0%, rgba(15, 23, 42, 0.16), transparent 55%);
+            filter: blur(12px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .header-magnetic.compact {
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: inset 0 1px rgba(255, 255, 255, 0.75), 0 20px 44px rgba(15, 23, 42, 0.18);
+        }
+
+        .header-magnetic.compact::after { opacity: 1; }
+
+        /* 方案 4：Split Accent */
+        .header-split {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            column-gap: 20px;
+            padding: 20px 26px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+
+        .header-split::before {
+            content: "";
+            position: absolute;
+            top: 14px;
+            bottom: 14px;
+            left: 14px;
+            width: 72px;
+            border-radius: 18px;
+            background: linear-gradient(160deg, rgba(0, 122, 255, 0.45), rgba(130, 219, 255, 0.15));
+        }
+
+        .header-split .title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-left: 88px;
+        }
+
+        .header-split.compact {
+            padding: 16px 20px;
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 20px 46px rgba(15, 23, 42, 0.12);
+        }
+
+        /* 方案 5：Floating Ribbon */
+        .header-ribbon {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 32px 26px;
+            border-radius: 22px;
+            background: #fdfdff;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+        }
+
+        .header-ribbon::after {
+            content: "";
+            position: absolute;
+            left: 18px;
+            right: 18px;
+            bottom: -14px;
+            height: 28px;
+            border-radius: 18px;
+            background: rgba(0, 122, 255, 0.16);
+            filter: blur(18px);
+            opacity: 0.6;
+        }
+
+        .header-ribbon .ribbon {
+            position: absolute;
+            left: 50%;
+            top: -14px;
+            transform: translateX(-50%);
+            min-width: 180px;
+            padding: 6px 18px;
+            border-radius: 999px;
+            background: linear-gradient(120deg, rgba(0, 122, 255, 0.7), rgba(10, 132, 255, 0.45));
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
+        .header-ribbon.compact {
+            padding: 16px 26px 22px;
+            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16);
+            border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        /* 公共 UI 元素示例 */
+        .header-shell {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .title-block {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .title-block h3 {
+            margin: 0;
+            font-size: 1.45rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: inherit;
+        }
+
+        .subtitle {
+            font-size: 0.88rem;
+            color: rgba(28, 28, 30, 0.6);
+        }
+
+        .action-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .pill-btn {
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.65);
+            color: #007aff;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.06);
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 32px 16px 60px; }
+            .demo-stage .app-frame { padding: 32px 24px; }
+            .demo-stage .app-body { margin-top: 160px; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root { background: #000000; color: #f5f5f7; }
+            body { background: #000000; }
+            .demo-card { background: rgba(28, 28, 30, 0.82); box-shadow: 0 26px 44px rgba(0, 0, 0, 0.6); }
+            .demo-card p { color: #a1a1a6; }
+            .demo-stage { background: linear-gradient(180deg, rgba(50, 50, 55, 0.8), rgba(24, 24, 28, 0.6)); }
+            .demo-stage .app-frame { background: rgba(32, 32, 36, 0.88); }
+            .demo-stage .app-body { background: rgba(255, 255, 255, 0.04); }
+            .subtitle { color: rgba(235, 235, 245, 0.6); }
+            .pill-btn { border-color: rgba(255, 255, 255, 0.12); background: rgba(10, 132, 255, 0.12); color: #0a84ff; }
+            .icon-btn { background: rgba(255, 255, 255, 0.12); color: #f5f5f7; }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="intro">
+            <h1>顶部栏设计方案</h1>
+            <p class="notes">以下展示 5 种不同风格的顶部栏容器样式，均以 Apple 风格的任务管理应用为背景。每个示例都提供常规态与滚动后的紧凑态设计要点，便于在实际页面中灵活替换。</p>
+        </section>
+
+        <section class="demo-grid">
+            <article class="demo-card">
+                <div>
+                    <h2>方案一：Aurora Glass</h2>
+                    <p>高透明毛玻璃效果，结合柔光边框与强烈的景深阴影，适合强调悬浮质感的主视觉页面。紧凑态中收紧内边距，并提升边框对比度以增强可读性。</p>
+                </div>
+                <div class="demo-stage">
+                    <div class="app-frame">
+                        <div class="header-glass header-shell">
+                            <div class="title-block">
+                                <button class="icon-btn" aria-label="切换主题">🌙</button>
+                                <div>
+                                    <h3>作业完成进度</h3>
+                                    <div class="subtitle">今日任务共 12 项 · 已完成 5 项</div>
+                                </div>
+                            </div>
+                            <div class="action-group">
+                                <button class="pill-btn">导出</button>
+                                <button class="pill-btn">编辑</button>
+                            </div>
+                        </div>
+                        <div class="app-body"></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案二：Gradient Capsule</h2>
+                    <p>柔和渐变胶囊，外层淡色描边与内层高光形成两层结构。适合配合亮色主题或想强调未来感的场景。</p>
+                </div>
+                <div class="demo-stage">
+                    <div class="app-frame">
+                        <div class="header-gradient header-shell">
+                            <div class="title-block">
+                                <button class="icon-btn" aria-label="切换主题">🌙</button>
+                                <div>
+                                    <h3>作业完成进度</h3>
+                                    <div class="subtitle">保持连贯的学习节奏</div>
+                                </div>
+                            </div>
+                            <div class="action-group">
+                                <button class="pill-btn">导入</button>
+                                <button class="pill-btn">保存</button>
+                            </div>
+                        </div>
+                        <div class="app-body"></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案三：Magnetic Tile</h2>
+                    <p>较硬朗的磁贴视觉，默认仅有微弱内阴影；滚动后出现更深的外阴影与地面反射，让“吸附”感觉更强。</p>
+                </div>
+                <div class="demo-stage">
+                    <div class="app-frame">
+                        <div class="header-magnetic header-shell">
+                            <div class="title-block">
+                                <button class="icon-btn" aria-label="切换主题">🌙</button>
+                                <div>
+                                    <h3>作业完成进度</h3>
+                                    <div class="subtitle">可拖拽排序与批量编辑</div>
+                                </div>
+                            </div>
+                            <div class="action-group">
+                                <button class="pill-btn">导出</button>
+                                <button class="pill-btn">编辑</button>
+                            </div>
+                        </div>
+                        <div class="app-body"></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案四：Split Accent</h2>
+                    <p>顶部栏左侧加入渐变 Accent 区域，突出品牌色或状态信息。适合想在标题旁呈现徽章、日期等额外信息的设计。</p>
+                </div>
+                <div class="demo-stage">
+                    <div class="app-frame">
+                        <div class="header-split">
+                            <div class="title">
+                                <div>
+                                    <h3>作业完成进度</h3>
+                                    <div class="subtitle">周计划 · 第 3 周</div>
+                                </div>
+                            </div>
+                            <div class="action-group">
+                                <button class="pill-btn">导入</button>
+                                <button class="pill-btn">保存</button>
+                                <button class="pill-btn">编辑</button>
+                            </div>
+                        </div>
+                        <div class="app-body"></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="demo-card">
+                <div>
+                    <h2>方案五：Floating Ribbon</h2>
+                    <p>顶部悬浮飘带强调重点信息，底部配合柔和的霓虹投影，适合活动态或展示最新公告的场景。</p>
+                </div>
+                <div class="demo-stage">
+                    <div class="app-frame">
+                        <div class="header-ribbon header-shell">
+                            <div class="ribbon">今日专注时段</div>
+                            <div class="title-block">
+                                <button class="icon-btn" aria-label="切换主题">🌙</button>
+                                <div>
+                                    <h3>作业完成进度</h3>
+                                    <div class="subtitle">下午 2:00 – 5:00 集中冲刺</div>
+                                </div>
+                            </div>
+                            <div class="action-group">
+                                <button class="pill-btn">导出</button>
+                                <button class="pill-btn">保存</button>
+                            </div>
+                        </div>
+                        <div class="app-body"></div>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
+</body>
+</html>
